@@ -35,11 +35,13 @@ type StatusRow = { n: number; status: TicketStatus };
 type PriorityRow = { n: number; priority: TicketPriority };
 type AgentLoadRow = { n: number; assigneeId: number | null };
 
+// Blue-forward palette shared across the CRM / IT / Helpdesk portals. The chart
+// var(--chart-*) tokens fall back to grayscale in dark mode, so use concrete hex.
 const STATUS_COLORS: Record<TicketStatus, string> = {
-  open: "var(--chart-1)",
-  in_progress: "var(--chart-2)",
-  resolved: "var(--chart-3)",
-  closed: "var(--chart-4)",
+  open: "#2563eb",
+  in_progress: "#0ea5e9",
+  resolved: "#14b8a6",
+  closed: "#94a3b8",
 };
 
 const queryCount = (filter: Record<string, unknown>) =>
