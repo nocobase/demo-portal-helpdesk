@@ -1,9 +1,9 @@
-import { useGetLocale, useList } from "@refinedev/core";
+import { useGetLocale, useList, useTranslate } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { AlarmClockOff, Timer } from "lucide-react";
 import { useMemo } from "react";
-import { useNavigate, Outlet } from "react-router";
+import { Outlet } from "react-router";
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableFilterCombobox } from "@/components/data-table/data-table-filter";
@@ -18,15 +18,17 @@ import {
   formatRelativeDeadline,
   getSlaState,
   getTicketDueAt,
-  PRIORITY_LABELS,
   TICKET_PRIORITIES,
+  translateTicketPriority,
   type AgentRef,
   type TicketRecord,
 } from "./lib";
 import { AgentAvatar } from "./tickets/ticket-list";
+import { useOpenContextualChild } from "./route-surfaces";
 
 export function SlaPage() {
-  const navigate = useNavigate();
+  const translate = useTranslate();
+  const openChild = useOpenContextualChild();
   const getLocale = useGetLocale();
   const locale = getLocale();
   const { result: agentsResult } = useList<AgentRef>({
@@ -39,9 +41,16 @@ export function SlaPage() {
     () =>
       agentsResult.data.map((agent) => ({
         value: String(agent.id),
-        label: agentDisplayName(agent),
+        label: agentDisplayName(
+          agent,
+          translate(
+            "tickets.assignee.unassigned",
+            { ns: "starter" },
+            "Unassigned"
+          )
+        ),
       })),
-    [agentsResult.data]
+    [agentsResult.data, translate]
   );
 
   const columns = useMemo(() => {
@@ -49,12 +58,16 @@ export function SlaPage() {
     return [
       columnHelper.accessor("subject", {
         id: "subject",
-        header: "Ticket",
+        header: translate(
+          "tickets.resource.singular",
+          { ns: "starter" },
+          "Ticket"
+        ),
         enableSorting: false,
         cell: ({ row }) => (
           <button
             type="button"
-            onClick={() => navigate(`/sla/${row.original.id}`)}
+            onClick={() => openChild(String(row.original.id))}
             className="max-w-80 truncate text-left font-medium hover:underline"
             title={row.original.subject}
           >
@@ -66,17 +79,17 @@ export function SlaPage() {
         id: "priority",
         header: ({ column, table }) => (
           <div className="flex items-center gap-1">
-            <span>Priority</span>
+            <span>{translate("tickets.fields.priority", { ns: "starter" }, "Priority")}</span>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={TICKET_PRIORITIES.map((priority) => ({
                 value: priority,
-                label: PRIORITY_LABELS[priority],
+                label: translateTicketPriority(translate, priority),
               }))}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by priority"
+              placeholder={translate("tickets.filters.priority", { ns: "starter" }, "Filter by priority")}
               multiple
             />
           </div>
@@ -86,7 +99,7 @@ export function SlaPage() {
       }),
       columnHelper.display({
         id: "category",
-        header: "Category",
+        header: translate("tickets.fields.category", { ns: "starter" }, "Category"),
         enableSorting: false,
         cell: ({ row }) => <CategoryBadge category={row.original.category} />,
       }),
@@ -94,14 +107,14 @@ export function SlaPage() {
         id: "assignee.id",
         header: ({ column, table }) => (
           <div className="flex items-center gap-1">
-            <span>Assignee</span>
+            <span>{translate("tickets.fields.assignee", { ns: "starter" }, "Assignee")}</span>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={agentOptions}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by assignee"
+              placeholder={translate("tickets.filters.assignee", { ns: "starter" }, "Filter by assignee")}
               multiple
             />
           </div>
@@ -111,7 +124,14 @@ export function SlaPage() {
           <div className="flex items-center gap-2">
             <AgentAvatar agent={row.original.assignee} className="size-6" />
             <span className="text-muted-foreground">
-              {agentDisplayName(row.original.assignee)}
+              {agentDisplayName(
+                row.original.assignee,
+                translate(
+                  "tickets.assignee.unassigned",
+                  { ns: "starter" },
+                  "Unassigned"
+                )
+              )}
             </span>
           </div>
         ),
@@ -120,7 +140,7 @@ export function SlaPage() {
         id: "resolution_due_at",
         header: ({ column }) => (
           <div className="flex items-center gap-1">
-            <span>Deadline</span>
+            <span>{translate("tickets.fields.resolutionDue", { ns: "starter" }, "Deadline")}</span>
             <DataTableSorter column={column} />
           </div>
         ),
@@ -129,7 +149,7 @@ export function SlaPage() {
       }),
       columnHelper.display({
         id: "sla",
-        header: "SLA status",
+        header: translate("tickets.fields.slaStatus", { ns: "starter" }, "SLA status"),
         enableSorting: false,
         cell: ({ row }) => {
           const due = getTicketDueAt(row.original);
@@ -139,7 +159,7 @@ export function SlaPage() {
               state={state}
               detail={
                 due && state !== "on_track"
-                  ? formatRelativeDeadline(due)
+                  ? formatRelativeDeadline(due, translate)
                   : undefined
               }
             />
@@ -147,7 +167,7 @@ export function SlaPage() {
         },
       }),
     ];
-  }, [agentOptions, locale, navigate]);
+  }, [agentOptions, locale, openChild, translate]);
 
   const table = useTable<TicketRecord>({
     columns,
@@ -182,20 +202,23 @@ export function SlaPage() {
         </div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-3xl font-semibold tracking-[-0.035em]">SLA</h2>
+            <h2 className="text-3xl font-semibold tracking-[-0.035em]">{translate("navigation.sla", { ns: "starter" }, "SLA")}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Active tickets ordered by deadline. Overdue and due-soon tickets
-              sit at the top.
+              {translate(
+                "sla.description",
+                { ns: "starter" },
+                "Active tickets ordered by deadline. Overdue and due-soon tickets sit at the top."
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="flex items-center gap-1.5 rounded-full border border-red-300/60 bg-red-50 px-3 py-1 font-medium text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
               <AlarmClockOff className="size-3.5" />
-              {overdueCount} overdue
+              {translate("sla.summary.overdue", { ns: "starter", count: overdueCount }, "{{count}} overdue")}
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1 font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
               <Timer className="size-3.5" />
-              {dueSoonCount} due within 2h
+              {translate("sla.summary.dueWithin", { ns: "starter", count: dueSoonCount, hours: 2 }, "{{count}} due within {{hours}}h")}
             </span>
           </div>
         </div>

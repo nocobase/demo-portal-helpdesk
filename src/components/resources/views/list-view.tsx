@@ -6,7 +6,10 @@ import { useResourceParams, useTranslate } from "@refinedev/core";
 import { Breadcrumb } from "@/components/app-shell/breadcrumb";
 import { CreateButton } from "@/components/resources/buttons/create";
 import { useResourceLabel } from "@/components/resources/resource-label";
-import { resolveTranslatableText, type TranslationOptions } from "@/lib/i18n";
+import {
+  resolveTranslatableText,
+  type TranslationOptions,
+} from "@nocobase/portal-sdk/i18n";
 import { cn } from "@/lib/utils";
 
 type ListViewProps = PropsWithChildren<{
@@ -70,7 +73,7 @@ export const ListViewHeader = ({
       </div>
       <div
         className={cn(
-          "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
+          "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
           headerClassName
         )}
       >
@@ -85,7 +88,7 @@ export const ListViewHeader = ({
           )}
         </div>
         {isCreateButtonVisible && (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2">
             <CreateButton resource={resourceName} />
           </div>
         )}

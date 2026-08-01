@@ -1,3 +1,5 @@
+import type { useTranslate } from "@refinedev/core";
+
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 export type TicketPriority = "low" | "medium" | "high" | "urgent";
 export type TicketCategory =
@@ -126,6 +128,32 @@ export const SOURCE_LABELS: Record<TicketSource, string> = {
   web: "Web portal",
 };
 
+type Translate = ReturnType<typeof useTranslate>;
+
+export const translateTicketStatus = (
+  translate: Translate,
+  status: TicketStatus
+) =>
+  translate(`tickets.status.${status}`, { ns: "starter" }, STATUS_LABELS[status]);
+
+export const translateTicketPriority = (
+  translate: Translate,
+  priority: TicketPriority
+) =>
+  translate(`tickets.priority.${priority}`, { ns: "starter" }, PRIORITY_LABELS[priority]);
+
+export const translateTicketCategory = (
+  translate: Translate,
+  category: TicketCategory
+) =>
+  translate(`tickets.category.${category}`, { ns: "starter" }, CATEGORY_LABELS[category]);
+
+export const translateTicketSource = (
+  translate: Translate,
+  source: TicketSource
+) =>
+  translate(`tickets.source.${source}`, { ns: "starter" }, SOURCE_LABELS[source]);
+
 export const ACTIVE_STATUSES: TicketStatus[] = ["open", "in_progress"];
 
 export const SLA_HOURS: Record<TicketPriority, number> = {
@@ -173,14 +201,38 @@ export const computeResolutionDueAt = (
     from.getTime() + SLA_HOURS[priority] * 60 * 60 * 1000
   ).toISOString();
 
-export const formatRelativeDeadline = (dueAt: Date, now: Date = new Date()) => {
+export const formatRelativeDeadline = (
+  dueAt: Date,
+  translate: Translate,
+  now: Date = new Date()
+) => {
   const diffMs = dueAt.getTime() - now.getTime();
   const abs = Math.abs(diffMs);
   const hours = Math.floor(abs / (60 * 60 * 1000));
   const minutes = Math.floor((abs % (60 * 60 * 1000)) / (60 * 1000));
-  const parts =
-    hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-  return diffMs < 0 ? `${parts} overdue` : `in ${parts}`;
+  const duration =
+    hours > 0
+      ? translate(
+          "tickets.sla.duration.hoursMinutes",
+          { ns: "starter", hours, minutes },
+          "{{hours}}h {{minutes}}m"
+        )
+      : translate(
+          "tickets.sla.duration.minutes",
+          { ns: "starter", minutes },
+          "{{minutes}}m"
+        );
+  return diffMs < 0
+    ? translate(
+        "tickets.sla.deadline.overdueBy",
+        { ns: "starter", duration },
+        "{{duration}} overdue"
+      )
+    : translate(
+        "tickets.sla.deadline.dueIn",
+        { ns: "starter", duration },
+        "due in {{duration}}"
+      );
 };
 
 export const formatDateTime = (value: string | null | undefined, locale?: string) =>
@@ -191,8 +243,10 @@ export const formatDateTime = (value: string | null | undefined, locale?: string
       }).format(new Date(value))
     : "-";
 
-export const agentDisplayName = (agent?: AgentRef | null) =>
-  agent?.nickname || agent?.username || agent?.email || "Unassigned";
+export const agentDisplayName = (
+  agent?: AgentRef | null,
+  fallback = "Unassigned"
+) => agent?.nickname || agent?.username || agent?.email || fallback;
 
 export const localToday = () => {
   const now = new Date();

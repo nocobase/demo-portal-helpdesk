@@ -134,7 +134,7 @@ Ticket volume remained stable, but unresolved priority requests increased in the
     toolCallId: "tool-demo-approval",
     state: "input-available",
     input: {
-      collection: "desk_tickets",
+      collection: "tickets",
       action: "Assign priority tickets to the on-call team",
     },
   },
@@ -150,7 +150,7 @@ Ticket volume remained stable, but unresolved priority requests increased in the
     toolName: "searchRecords",
     toolCallId: "tool-demo-running",
     state: "input-available",
-    input: { collection: "desk_tickets", filter: { status: "open" } },
+    input: { collection: "tickets", filter: { status: "open" } },
   },
   completed: {
     type: "dynamic-tool",

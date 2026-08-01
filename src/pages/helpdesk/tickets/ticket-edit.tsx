@@ -1,7 +1,8 @@
-import { type HttpError } from "@refinedev/core";
+import { useTranslate, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useEffect } from "react";
 import { useParams } from "react-router";
+import { useRouteSurfaceClose } from "@nocobase/portal-sdk/routing";
 
 import { LoadingState } from "@/components/app-shell/loading-state";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import {
   RouteDrawer,
   RouteDrawerFooter,
   useRefineUnsavedChangesGuard,
-  useRouteSurfaceClose,
 } from "@/extensions/nocobase-route-surfaces";
 import {
   computeResolutionDueAt,
@@ -21,19 +21,21 @@ import {
   TicketFormFields,
   type TicketFormValues,
 } from "./ticket-form-fields";
-import { ticketPaths } from "./ticket-list";
+import { useContextualCloseTo } from "../route-surfaces";
 
 export function TicketEdit() {
+  const translate = useTranslate();
   const { id } = useParams<{ id: string }>();
+  const closeTo = useContextualCloseTo();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
 
   return (
     <>
       <RouteDrawer
-        title="Edit ticket"
-        description="Change ticket details. Changing the priority resets the response deadline."
-        closeLabel="Close"
-        closeTo={ticketPaths.list}
+        title={translate("tickets.actions.edit", { ns: "starter" }, "Edit ticket")}
+        description={translate("tickets.form.editDescription", { ns: "starter" }, "Change ticket details. Changing the priority resets the response deadline.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
         beforeClose={beforeClose}
       >
         <TicketEditForm ticketId={id} />
@@ -44,6 +46,7 @@ export function TicketEdit() {
 }
 
 function TicketEditForm({ ticketId }: { ticketId?: string }) {
+  const translate = useTranslate();
   const close = useRouteSurfaceClose();
   const {
     refineCore: { onFinish, query },
@@ -108,13 +111,15 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
         </div>
         <RouteDrawerFooter className="flex-row justify-end">
           <Button type="button" variant="outline" onClick={() => close()}>
-            Cancel
+            {translate("buttons.cancel", { ns: "starter" }, "Cancel")}
           </Button>
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
           >
-            {form.formState.isSubmitting ? "Saving..." : "Save changes"}
+            {form.formState.isSubmitting
+              ? translate("tickets.actions.saving", { ns: "starter" }, "Saving...")
+              : translate("tickets.actions.save", { ns: "starter" }, "Save changes")}
           </Button>
         </RouteDrawerFooter>
       </form>

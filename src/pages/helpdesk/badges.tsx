@@ -1,10 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@refinedev/core";
 import { Bug, CircleHelp, CreditCard, Lightbulb, UserRound } from "lucide-react";
 import {
-  CATEGORY_LABELS,
-  PRIORITY_LABELS,
-  STATUS_LABELS,
+  translateTicketCategory,
+  translateTicketPriority,
+  translateTicketStatus,
   type SlaState,
   type TicketCategory,
   type TicketPriority,
@@ -35,6 +36,7 @@ export function TicketStatusBadge({
   status: TicketStatus;
   className?: string;
 }) {
+  const translate = useTranslate();
   return (
     <Badge
       variant="outline"
@@ -44,7 +46,7 @@ export function TicketStatusBadge({
         aria-hidden="true"
         className={cn("size-1.5 rounded-full", statusDotStyles[status])}
       />
-      {STATUS_LABELS[status]}
+      {translateTicketStatus(translate, status)}
     </Badge>
   );
 }
@@ -65,37 +67,42 @@ export function PriorityBadge({
   priority: TicketPriority;
   className?: string;
 }) {
+  const translate = useTranslate();
   return (
     <Badge
       variant="outline"
       className={cn("h-6 shadow-none", priorityStyles[priority], className)}
     >
-      {PRIORITY_LABELS[priority]}
+      {translateTicketPriority(translate, priority)}
     </Badge>
   );
 }
 
 const slaConfig: Record<
   SlaState,
-  { label: string; className: string }
+  { i18nKey: string; fallback: string; className: string }
 > = {
   overdue: {
-    label: "Overdue",
+    i18nKey: "tickets.sla.state.overdue",
+    fallback: "Overdue",
     className:
       "border-red-300/60 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300",
   },
   due_soon: {
-    label: "Due soon",
+    i18nKey: "tickets.sla.state.due_soon",
+    fallback: "Due soon",
     className:
       "border-amber-300/60 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300",
   },
   on_track: {
-    label: "On track",
+    i18nKey: "tickets.sla.state.on_track",
+    fallback: "On track",
     className:
       "border-emerald-300/60 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300",
   },
   no_deadline: {
-    label: "No deadline",
+    i18nKey: "tickets.sla.state.no_deadline",
+    fallback: "No deadline",
     className: "border-border bg-muted text-muted-foreground",
   },
 };
@@ -109,13 +116,14 @@ export function SlaBadge({
   detail?: string;
   className?: string;
 }) {
+  const translate = useTranslate();
   const config = slaConfig[state];
   return (
     <Badge
       variant="outline"
       className={cn("h-6 shadow-none", config.className, className)}
     >
-      {config.label}
+      {translate(config.i18nKey, { ns: "starter" }, config.fallback)}
       {detail ? <span className="font-normal opacity-80">· {detail}</span> : null}
     </Badge>
   );
@@ -128,6 +136,7 @@ export function CategoryBadge({
   category?: TicketCategory | null;
   className?: string;
 }) {
+  const translate = useTranslate();
   if (!category) return <span className="text-muted-foreground">-</span>;
   const Icon = {
     bug: Bug,
@@ -146,7 +155,7 @@ export function CategoryBadge({
       )}
     >
       <Icon className="size-3" />
-      {CATEGORY_LABELS[category]}
+      {translateTicketCategory(translate, category)}
     </Badge>
   );
 }

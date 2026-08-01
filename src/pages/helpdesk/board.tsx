@@ -1,7 +1,7 @@
-import { useList, useUpdate } from "@refinedev/core";
+import { useList, useTranslate, useUpdate } from "@refinedev/core";
 import { Plus } from "lucide-react";
 import { useState, type DragEvent } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet } from "react-router";
 
 import { Breadcrumb } from "@/components/app-shell/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import {
   type TicketRecord,
   type TicketStatus,
 } from "./lib";
-import { AgentAvatar, ticketPaths } from "./tickets/ticket-list";
+import { AgentAvatar } from "./tickets/ticket-list";
+import { useOpenContextualChild } from "./route-surfaces";
 
 const COLUMN_STYLES: Record<TicketStatus, string> = {
   open: "border-t-blue-400",
@@ -27,7 +28,8 @@ const COLUMN_STYLES: Record<TicketStatus, string> = {
 };
 
 export function BoardPage() {
-  const navigate = useNavigate();
+  const translate = useTranslate();
+  const openChild = useOpenContextualChild();
   const update = useUpdate();
   const [dragOver, setDragOver] = useState<TicketStatus | null>(null);
   const { result, query } = useList<TicketRecord>({
@@ -68,16 +70,19 @@ export function BoardPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold tracking-[-0.035em]">
-              Board
+              {translate("navigation.board", { ns: "starter" }, "Board")}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Drag cards between columns to move tickets through open, in
-              progress, resolved, and closed.
+              {translate(
+                "board.description",
+                { ns: "starter" },
+                "Drag cards between columns to move tickets through open, in progress, resolved, and closed."
+              )}
             </p>
           </div>
-          <Button type="button" onClick={() => navigate(ticketPaths.create)}>
+          <Button type="button" onClick={() => openChild("create")}>
             <Plus />
-            New ticket
+            {translate("tickets.actions.new", { ns: "starter" }, "New ticket")}
           </Button>
         </div>
       </div>
@@ -119,12 +124,16 @@ export function BoardPage() {
                   <BoardCard
                     key={ticket.id}
                     ticket={ticket}
-                    onOpen={() => navigate(`/board/${ticket.id}`)}
+                    onOpen={() => openChild(String(ticket.id))}
                   />
                 ))}
                 {tickets.length === 0 ? (
                   <p className="rounded-lg border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">
-                    Drop tickets here
+                    {translate(
+                      "board.emptyColumn",
+                      { ns: "starter" },
+                      "Drop tickets here"
+                    )}
                   </p>
                 ) : null}
               </div>
@@ -144,6 +153,7 @@ function BoardCard({
   ticket: TicketRecord;
   onOpen: () => void;
 }) {
+  const translate = useTranslate();
   const due = getTicketDueAt(ticket);
   const slaState = getSlaState(ticket);
   return (
@@ -168,7 +178,7 @@ function BoardCard({
                 : "text-amber-600 dark:text-amber-400"
             )}
           >
-            {formatRelativeDeadline(due)}
+            {formatRelativeDeadline(due, translate)}
           </span>
         ) : null}
       </div>
@@ -178,7 +188,14 @@ function BoardCard({
         </span>
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <AgentAvatar agent={ticket.assignee} className="size-5" />
-          {agentDisplayName(ticket.assignee)}
+          {agentDisplayName(
+            ticket.assignee,
+            translate(
+              "tickets.assignee.unassigned",
+              { ns: "starter" },
+              "Unassigned"
+            )
+          )}
         </span>
       </div>
     </button>

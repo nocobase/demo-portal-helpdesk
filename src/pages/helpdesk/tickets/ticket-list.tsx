@@ -3,7 +3,6 @@ import { useTable } from "@refinedev/react-table";
 import { createColumnHelper, type Column } from "@tanstack/react-table";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useCallback, useMemo, type ReactNode } from "react";
-import { useNavigate } from "react-router";
 
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -19,9 +18,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CategoryBadge, PriorityBadge, SlaBadge, TicketStatusBadge } from "../badges";
 import {
   agentDisplayName,
-  CATEGORY_LABELS,
-  PRIORITY_LABELS,
-  STATUS_LABELS,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES,
@@ -30,7 +26,11 @@ import {
   getTicketDueAt,
   type AgentRef,
   type TicketRecord,
+  translateTicketCategory,
+  translateTicketPriority,
+  translateTicketStatus,
 } from "../lib";
+import { useOpenContextualChild } from "../route-surfaces";
 
 function TicketColumnHeader<TValue>({
   children,
@@ -66,7 +66,15 @@ export function AgentAvatar({
   agent?: AgentRef | null;
   className?: string;
 }) {
-  const initials = agentDisplayName(agent)
+  const translate = useTranslate();
+  const initials = agentDisplayName(
+    agent,
+    translate(
+      "tickets.assignee.unassigned",
+      { ns: "starter" },
+      "Unassigned"
+    )
+  )
     .split(/\s+/)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
@@ -84,10 +92,14 @@ export function TicketList() {
   const translate = useTranslate();
   const getLocale = useGetLocale();
   const locale = getLocale();
-  const navigate = useNavigate();
+  const openChild = useOpenContextualChild();
   const openTicket = useCallback(
-    (id: number) => navigate(ticketPaths.show(id)),
-    [navigate]
+    (id: number) => openChild(`show/${id}`),
+    [openChild]
+  );
+  const editTicket = useCallback(
+    (id: number) => openChild(`edit/${id}`),
+    [openChild]
   );
   const { result: agentsResult } = useList<AgentRef>({
     resource: "users",
@@ -99,9 +111,16 @@ export function TicketList() {
     () =>
       agentsResult.data.map((agent) => ({
         value: String(agent.id),
-        label: agentDisplayName(agent),
+        label: agentDisplayName(
+          agent,
+          translate(
+            "tickets.assignee.unassigned",
+            { ns: "starter" },
+            "Unassigned"
+          )
+        ),
       })),
-    [agentsResult.data]
+    [agentsResult.data, translate]
   );
 
   const columns = useMemo(() => {
@@ -111,7 +130,7 @@ export function TicketList() {
       columnHelper.accessor("subject", {
         id: "subject",
         header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label="Subject">
+          <TicketColumnHeader column={column} label={translate("tickets.fields.subject", { ns: "starter" }, "Subject")}>
             <DataTableFilterDropdownText
               column={column}
               table={table}
@@ -135,17 +154,17 @@ export function TicketList() {
       columnHelper.accessor("status", {
         id: "status",
         header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label="Status" sortable={false}>
+          <TicketColumnHeader column={column} label={translate("tickets.fields.status", { ns: "starter" }, "Status")} sortable={false}>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={TICKET_STATUSES.map((status) => ({
                 value: status,
-                label: STATUS_LABELS[status],
+                label: translateTicketStatus(translate, status),
               }))}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by status"
+              placeholder={translate("tickets.filters.status", { ns: "starter" }, "Filter by status")}
               multiple
             />
           </TicketColumnHeader>
@@ -156,17 +175,17 @@ export function TicketList() {
       columnHelper.accessor("priority", {
         id: "priority",
         header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label="Priority" sortable={false}>
+          <TicketColumnHeader column={column} label={translate("tickets.fields.priority", { ns: "starter" }, "Priority")} sortable={false}>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={TICKET_PRIORITIES.map((priority) => ({
                 value: priority,
-                label: PRIORITY_LABELS[priority],
+                label: translateTicketPriority(translate, priority),
               }))}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by priority"
+              placeholder={translate("tickets.filters.priority", { ns: "starter" }, "Filter by priority")}
               multiple
             />
           </TicketColumnHeader>
@@ -177,17 +196,17 @@ export function TicketList() {
       columnHelper.accessor("category", {
         id: "category",
         header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label="Category" sortable={false}>
+          <TicketColumnHeader column={column} label={translate("tickets.fields.category", { ns: "starter" }, "Category")} sortable={false}>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={TICKET_CATEGORIES.map((category) => ({
                 value: category,
-                label: CATEGORY_LABELS[category],
+                label: translateTicketCategory(translate, category),
               }))}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by category"
+              placeholder={translate("tickets.filters.category", { ns: "starter" }, "Filter by category")}
               multiple
             />
           </TicketColumnHeader>
@@ -198,7 +217,7 @@ export function TicketList() {
       columnHelper.accessor("requester_name", {
         id: "requester_name",
         header: ({ column }) => (
-          <TicketColumnHeader column={column} label="Requester" sortable={false} />
+          <TicketColumnHeader column={column} label={translate("tickets.fields.requester", { ns: "starter" }, "Requester")} sortable={false} />
         ),
         enableSorting: false,
         cell: ({ getValue }) => getValue() || "-",
@@ -206,14 +225,14 @@ export function TicketList() {
       columnHelper.accessor((record) => record.assigneeId, {
         id: "assignee.id",
         header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label="Assignee" sortable={false}>
+          <TicketColumnHeader column={column} label={translate("tickets.fields.assignee", { ns: "starter" }, "Assignee")} sortable={false}>
             <DataTableFilterCombobox
               column={column}
               table={table}
               options={agentOptions}
               defaultOperator="in"
               operators={["in", "nin"]}
-              placeholder="Filter by assignee"
+              placeholder={translate("tickets.filters.assignee", { ns: "starter" }, "Filter by assignee")}
               multiple
             />
           </TicketColumnHeader>
@@ -223,14 +242,21 @@ export function TicketList() {
           <div className="flex items-center gap-2">
             <AgentAvatar agent={row.original.assignee} className="size-6" />
             <span className="text-muted-foreground">
-              {agentDisplayName(row.original.assignee)}
+              {agentDisplayName(
+                row.original.assignee,
+                translate(
+                  "tickets.assignee.unassigned",
+                  { ns: "starter" },
+                  "Unassigned"
+                )
+              )}
             </span>
           </div>
         ),
       }),
       columnHelper.display({
         id: "sla",
-        header: "SLA",
+        header: translate("tickets.fields.sla", { ns: "starter" }, "SLA"),
         cell: ({ row }) => {
           const due = getTicketDueAt(row.original);
           const state = getSlaState(row.original);
@@ -239,7 +265,7 @@ export function TicketList() {
               state={state}
               detail={
                 due && state !== "on_track"
-                  ? formatRelativeDeadline(due)
+                  ? formatRelativeDeadline(due, translate)
                   : undefined
               }
             />
@@ -250,7 +276,7 @@ export function TicketList() {
       columnHelper.accessor("createdAt", {
         id: "createdAt",
         header: ({ column }) => (
-          <TicketColumnHeader column={column} label="Created" />
+          <TicketColumnHeader column={column} label={translate("tickets.fields.created", { ns: "starter" }, "Created")} />
         ),
         enableSorting: true,
         cell: ({ getValue }) =>
@@ -262,7 +288,7 @@ export function TicketList() {
       }),
       columnHelper.display({
         id: "actions",
-        header: translate("tickets.fields.actions", {}, "Actions"),
+        header: translate("tickets.fields.actions", { ns: "starter" }, "Actions"),
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <EditButton
@@ -270,8 +296,9 @@ export function TicketList() {
               recordItemId={row.original.id}
               variant="ghost"
               size="icon"
-              aria-label="Edit ticket"
-              title="Edit ticket"
+              aria-label={translate("tickets.actions.edit", { ns: "starter" }, "Edit ticket")}
+              title={translate("tickets.actions.edit", { ns: "starter" }, "Edit ticket")}
+              onClick={() => editTicket(row.original.id)}
             >
               <Pencil />
             </EditButton>
@@ -280,8 +307,9 @@ export function TicketList() {
               recordItemId={row.original.id}
               variant="ghost"
               size="icon"
-              aria-label="View ticket"
-              title="View ticket"
+              aria-label={translate("tickets.actions.view", { ns: "starter" }, "View ticket")}
+              title={translate("tickets.actions.view", { ns: "starter" }, "View ticket")}
+              onClick={() => openTicket(row.original.id)}
             >
               <Eye />
             </ShowButton>
@@ -291,8 +319,8 @@ export function TicketList() {
               variant="ghost"
               size="icon"
               className="text-destructive hover:text-destructive"
-              aria-label="Delete ticket"
-              title="Delete ticket"
+              aria-label={translate("tickets.actions.delete", { ns: "starter" }, "Delete ticket")}
+              title={translate("tickets.actions.delete", { ns: "starter" }, "Delete ticket")}
             >
               <Trash2 />
             </DeleteButton>
@@ -302,7 +330,7 @@ export function TicketList() {
         size: 144,
       }),
     ];
-  }, [agentOptions, locale, openTicket, translate]);
+  }, [agentOptions, editTicket, locale, openTicket, translate]);
 
   const table = useTable<TicketRecord>({
     columns,

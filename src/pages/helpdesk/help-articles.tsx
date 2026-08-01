@@ -1,4 +1,4 @@
-import { useList } from "@refinedev/core";
+import { useList, useTranslate } from "@refinedev/core";
 import { BookOpenText, Search } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 
@@ -8,6 +8,7 @@ import { CategoryBadge } from "./badges";
 import { type HelpArticleRecord } from "./lib";
 
 export function HelpArticlesPage() {
+  const translate = useTranslate();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const { result, query: articlesQuery } = useList<HelpArticleRecord>({
@@ -27,18 +28,18 @@ export function HelpArticlesPage() {
         <div className="flex items-center text-muted-foreground"><Breadcrumb /></div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">Reply with confidence</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Help library</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Practical answer starters the team can use before sending a reply.</p>
+            <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">{translate("helpLibrary.eyebrow", { ns: "starter" }, "Reply with confidence")}</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">{translate("navigation.helpLibrary", { ns: "starter" }, "Help library")}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{translate("helpLibrary.intro", { ns: "starter" }, "Practical answer starters the team can use before sending a reply.")}</p>
           </div>
           <label className="relative block w-full sm:w-72">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9" placeholder="Search articles" />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9" placeholder={translate("helpLibrary.searchPlaceholder", { ns: "starter" }, "Search articles")} />
           </label>
         </div>
       </div>
-      {articlesQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading articles...</p> : articles.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">No matching articles yet.</div>
+      {articlesQuery.isLoading ? <p className="text-sm text-muted-foreground">{translate("helpLibrary.loading", { ns: "starter" }, "Loading articles...")}</p> : articles.length === 0 ? (
+        <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">{translate("helpLibrary.empty", { ns: "starter" }, "No matching articles yet.")}</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {articles.map((article) => (

@@ -11,10 +11,9 @@ import { Login } from "@/pages/login";
 import { Register } from "@/pages/register";
 import {
   AppExtensionProviders,
-  extensionRouteElements,
+  configuredRouteElements,
   extensionStandaloneRouteElements,
 } from "./extensions";
-import { helpdeskRouteElements } from "@/pages/helpdesk";
 
 export function AppRoutes() {
   return (
@@ -42,8 +41,7 @@ export function AppRoutes() {
           }
         >
           <Route index element={<NavigateToAccessibleResource />} />
-          {helpdeskRouteElements}
-          {extensionRouteElements}
+          {configuredRouteElements}
           <Route path="*" element={<ErrorComponent />} />
         </Route>
       </Route>

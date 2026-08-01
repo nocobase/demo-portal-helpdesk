@@ -1,4 +1,4 @@
-import { Chat, useChat } from "@ai-sdk/react";
+import type { Chat } from "@ai-sdk/react";
 import {
   useCallback,
   useEffect,
@@ -38,6 +38,7 @@ import {
   type AIMessageEditingSnapshot,
 } from "./use-chat-message-actions";
 import { useChatWorkContext } from "./use-chat-work-context";
+import { useChatState } from "./use-chat-state";
 import { useConversationCatalog } from "./use-conversation-catalog";
 import { useConversationHistory } from "./use-conversation-history";
 import { useChatRuntime } from "./use-chat-runtime";
@@ -251,10 +252,7 @@ export function AIChatProvider({
   });
 
   const activeChat = getChat(state.activeConversationId);
-  const chat = useChat<AIChatMessage>({
-    chat: activeChat,
-    experimental_throttle: 32,
-  });
+  const chat = useChatState(activeChat);
   const draft = state.drafts[state.activeConversationId] ?? "";
   const activeConversation = state.conversations.find(
     (conversation) => conversation.id === state.activeConversationId

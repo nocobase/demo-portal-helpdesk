@@ -4,31 +4,35 @@ import { BrowserRouter } from "react-router";
 import routerProvider, {
   UnsavedChangesNotifier,
 } from "@refinedev/react-router";
-import { dataProvider } from "./providers/data";
+import {
+  accessControlProvider,
+  AclStoreProvider,
+  aclStore,
+} from "@nocobase/portal-sdk/acl";
+import { authProvider } from "@nocobase/portal-sdk/auth";
+import { dataProvider } from "@nocobase/portal-sdk/data";
+import { i18nProvider } from "@nocobase/portal-sdk/i18n";
+import { getPortalBase } from "@nocobase/portal-sdk/runtime";
 import { DocumentTitleHandler } from "./components/app-shell/document-title-handler";
 import { useNotificationProvider } from "./components/notifications/use-notification-provider";
 import { Toaster } from "./components/notifications/toaster";
 import { ThemeProvider } from "./components/theme/theme-provider";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { BrandLogo } from "./components/app-shell/brand";
-import { AppAuthRuntimeProviders, extensionResources } from "./app/extensions";
+import {
+  AppAuthRuntimeProviders,
+  configuredResources,
+} from "./app/extensions";
 import "./App.css";
-import { authProvider } from "./providers/auth";
-import { accessControlProvider } from "./providers/access-control";
-import { i18nProvider } from "./providers/i18n";
-import { SystemSettingsProvider } from "./providers/system-settings";
-import { getPortalBase } from "./providers/runtime-config";
-import { AclStoreProvider, aclStore } from "./lib/nocobase/acl";
+import { SystemSettingsProvider } from "./providers/system-settings/provider";
 import { AppRoutes } from "./app/routes";
-import { helpdeskResources } from "./pages/helpdesk";
 
 const getResourcePriority = (resource: ResourceProps) =>
   typeof resource.meta?.priority === "number" ? resource.meta.priority : 100;
 
-const appResources = [
-  ...helpdeskResources,
-  ...extensionResources.filter((resource) => resource.name !== "users"),
-].sort((left, right) => getResourcePriority(left) - getResourcePriority(right));
+const appResources = [...configuredResources].sort(
+  (left, right) => getResourcePriority(left) - getResourcePriority(right)
+);
 
 const basename = getPortalBase().replace(/\/+$/, "");
 

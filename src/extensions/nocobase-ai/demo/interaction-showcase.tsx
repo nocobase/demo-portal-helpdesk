@@ -35,7 +35,7 @@ const showcaseMessages = [
         toolName: "inspectDataModel",
         toolCallId: "message-presentation-tool",
         state: "output-available",
-        input: { collections: ["desk_tickets", "categories", "users"] },
+        input: { collections: ["tickets", "categories", "users"] },
         output: { collectionsFound: 3 },
       },
       {

@@ -3,6 +3,7 @@ import {
   useGetIdentity,
   useGetLocale,
   useList,
+  useTranslate,
   useUpdate,
   type HttpError,
 } from "@refinedev/core";
@@ -19,11 +20,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate, useOutlet, useParams } from "react-router";
+import { useOutlet, useParams } from "react-router";
 
 import { LoadingState } from "@/components/app-shell/loading-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -37,43 +37,49 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { RouteDrawer } from "@/extensions/nocobase-route-surfaces";
 import { AIEmployeeShortcut, useAIPageElementHandle, type AIEmployeeTask } from "@/extensions/nocobase-ai";
-import { CategoryBadge, PriorityBadge, SlaBadge, TicketStatusBadge } from "../badges";
+import { PriorityBadge, SlaBadge, TicketStatusBadge } from "../badges";
 import {
   agentDisplayName,
-  CATEGORY_LABELS,
   formatDateTime,
   formatRelativeDeadline,
   getSlaState,
   getTicketDueAt,
   SLA_HOURS,
-  SOURCE_LABELS,
   type AgentRef,
   type HelpArticleRecord,
   type TicketMessageRecord,
   type TicketNoteRecord,
   type TicketRecord,
   type TicketStatus,
+  translateTicketCategory,
+  translateTicketSource,
 } from "../lib";
-import { AgentAvatar, ticketPaths } from "./ticket-list";
+import { AgentAvatar } from "./ticket-list";
+import {
+  useContextualCloseTo,
+  useOpenContextualChild,
+} from "../route-surfaces";
 
 const TRANSITIONS: Record<
   TicketStatus,
-  Array<{ label: string; to: TicketStatus; icon: typeof PlayCircle; variant?: "secondary" | "outline" | "default" }>
+  Array<{ i18nKey: string; fallback: string; to: TicketStatus; icon: typeof PlayCircle; variant?: "secondary" | "outline" | "default" }>
 > = {
-  open: [{ label: "Start progress", to: "in_progress", icon: PlayCircle }],
-  in_progress: [{ label: "Resolve", to: "resolved", icon: CheckCircle2 }],
+  open: [{ i18nKey: "tickets.actions.startProgress", fallback: "Start progress", to: "in_progress", icon: PlayCircle }],
+  in_progress: [{ i18nKey: "tickets.actions.resolve", fallback: "Resolve", to: "resolved", icon: CheckCircle2 }],
   resolved: [
-    { label: "Close", to: "closed", icon: XCircle },
-    { label: "Reopen", to: "in_progress", icon: RotateCcw, variant: "outline" },
+    { i18nKey: "tickets.actions.close", fallback: "Close", to: "closed", icon: XCircle },
+    { i18nKey: "tickets.actions.reopen", fallback: "Reopen", to: "in_progress", icon: RotateCcw, variant: "outline" },
   ],
   closed: [
-    { label: "Reopen", to: "open", icon: RotateCcw, variant: "outline" },
+    { i18nKey: "tickets.actions.reopen", fallback: "Reopen", to: "open", icon: RotateCcw, variant: "outline" },
   ],
 };
 
-export function TicketShow({ closeTo = ticketPaths.list }: { closeTo?: string }) {
+export function TicketShow() {
+  const translate = useTranslate();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const openChild = useOpenContextualChild();
+  const closeTo = useContextualCloseTo();
   const nested = useOutlet();
   const getLocale = useGetLocale();
   const locale = getLocale();
@@ -107,17 +113,30 @@ export function TicketShow({ closeTo = ticketPaths.list }: { closeTo?: string })
           <Skeleton className="h-6 w-56" />
         ) : (
           <span className="flex items-center gap-2">
-            <span className="truncate">{record?.subject ?? "Ticket"}</span>
+            <span className="truncate">{record?.subject ?? translate("tickets.resource.singular", { ns: "starter" }, "Ticket")}</span>
             {record ? <TicketStatusBadge status={record.status} /> : null}
           </span>
         )
       }
       description={
         record
-          ? `Opened by ${record.requester_name} via ${SOURCE_LABELS[record.source] ?? record.source} · ${formatDateTime(record.createdAt, locale)}`
-          : "Review the issue, move it through the status flow, and keep notes on each step."
+          ? translate(
+              "tickets.show.openedBy",
+              {
+                ns: "starter",
+                requester: record.requester_name,
+                source: translateTicketSource(translate, record.source),
+                createdAt: formatDateTime(record.createdAt, locale),
+              },
+              "Opened by {{requester}} via {{source}} · {{createdAt}}"
+            )
+          : translate(
+              "tickets.show.description",
+              { ns: "starter" },
+              "Review the issue, move it through the status flow, and keep notes on each step."
+            )
       }
-      closeLabel="Close"
+      closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
       closeTo={closeTo}
       nested={nested}
       actions={
@@ -126,10 +145,10 @@ export function TicketShow({ closeTo = ticketPaths.list }: { closeTo?: string })
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => navigate(ticketPaths.edit(record.id))}
+            onClick={() => openChild("edit")}
           >
             <Pencil />
-            Edit
+            {translate("buttons.edit", { ns: "starter" }, "Edit")}
           </Button>
         ) : null
       }
@@ -140,8 +159,11 @@ export function TicketShow({ closeTo = ticketPaths.list }: { closeTo?: string })
         ) : query.isError || !record ? (
           <Alert variant="destructive">
             <AlertDescription>
-              The ticket may no longer exist, or you may not have permission to
-              view it.
+              {translate(
+                "tickets.show.loadError",
+                { ns: "starter" },
+                "The ticket may no longer exist, or you may not have permission to view it."
+              )}
             </AlertDescription>
           </Alert>
         ) : (
@@ -157,7 +179,11 @@ export function TicketShow({ closeTo = ticketPaths.list }: { closeTo?: string })
                   onClick={() => applyStatus(transition.to)}
                 >
                   <transition.icon />
-                  {transition.label}
+                  {translate(
+                    transition.i18nKey,
+                    { ns: "starter" },
+                    transition.fallback
+                  )}
                 </Button>
               ))}
             </section>
@@ -189,6 +215,7 @@ function TicketShowBody({
   locale?: string;
   onUpdated: () => void;
 }) {
+  const translate = useTranslate();
   const { result: agentsResult } = useList<AgentRef>({
     resource: "users",
     pagination: { mode: "server", currentPage: 1, pageSize: 200 },
@@ -198,26 +225,29 @@ function TicketShowBody({
   const update = useUpdate();
   const due = getTicketDueAt(record);
   const slaState = getSlaState(record);
+  const selectedAssignee =
+    agentsResult.data.find((agent) => agent.id === record.assigneeId) ??
+    record.assignee;
 
   return (
     <div className="space-y-5">
       <section className="space-y-3">
-        <h3 className="text-sm font-medium">Details</h3>
+        <h3 className="text-sm font-medium">{translate("tickets.show.details", { ns: "starter" }, "Details")}</h3>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Priority</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.priority", { ns: "starter" }, "Priority")}</dt>
             <dd>
               <PriorityBadge priority={record.priority} />
             </dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Category</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.category", { ns: "starter" }, "Category")}</dt>
             <dd className="text-sm font-medium">
-              {record.category ? CATEGORY_LABELS[record.category] : "-"}
+              {record.category ? translateTicketCategory(translate, record.category) : "-"}
             </dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Assignee</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.assignee", { ns: "starter" }, "Assignee")}</dt>
             <dd>
               <Select
                 value={
@@ -237,12 +267,18 @@ function TicketShowBody({
                 }
               >
                 <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Unassigned" />
+                  <SelectValue placeholder={translate("tickets.assignee.unassigned", { ns: "starter" }, "Unassigned")}>
+                    {selectedAssignee
+                      ? agentDisplayName(selectedAssignee, translate("tickets.assignee.unassigned", { ns: "starter" }, "Unassigned"))
+                      : record.assigneeId != null
+                        ? translate("tickets.assignee.loading", { ns: "starter" }, "Loading assignee...")
+                        : null}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {agentsResult.data.map((agent) => (
                     <SelectItem key={agent.id} value={String(agent.id)}>
-                      {agentDisplayName(agent)}
+                      {agentDisplayName(agent, translate("tickets.assignee.unassigned", { ns: "starter" }, "Unassigned"))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -250,42 +286,54 @@ function TicketShowBody({
             </dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">SLA</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.sla", { ns: "starter" }, "SLA")}</dt>
             <dd className="flex items-center gap-2">
               <SlaBadge
                 state={slaState}
                 detail={
                   due && slaState !== "on_track"
-                    ? formatRelativeDeadline(due)
+                    ? formatRelativeDeadline(due, translate)
                     : undefined
                 }
               />
               {due ? (
                 <span className="text-xs text-muted-foreground">
-                  due {formatDateTime(record.resolution_due_at, locale)}
+                  {translate(
+                    "tickets.show.deadlineAt",
+                    { ns: "starter", deadline: formatDateTime(record.resolution_due_at, locale) },
+                    "due {{deadline}}"
+                  )}
                 </span>
               ) : null}
             </dd>
           </div>
         </dl>
         <p className="text-xs text-muted-foreground">
-          Deadlines by priority: urgent {SLA_HOURS.urgent}h · high{" "}
-          {SLA_HOURS.high}h · medium {SLA_HOURS.medium}h · low {SLA_HOURS.low}h,
-          measured from when the ticket is logged.
+          {translate(
+            "tickets.show.deadlinePolicy",
+            {
+              ns: "starter",
+              urgent: SLA_HOURS.urgent,
+              high: SLA_HOURS.high,
+              medium: SLA_HOURS.medium,
+              low: SLA_HOURS.low,
+            },
+            "Deadlines by priority: urgent {{urgent}}h · high {{high}}h · medium {{medium}}h · low {{low}}h, measured from when the ticket is logged."
+          )}
         </p>
       </section>
 
       <Separator />
 
       <section className="space-y-3">
-        <h3 className="text-sm font-medium">Requester</h3>
+        <h3 className="text-sm font-medium">{translate("tickets.show.requester", { ns: "starter" }, "Requester")}</h3>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Name</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.show.name", { ns: "starter" }, "Name")}</dt>
             <dd className="text-sm font-medium">{record.requester_name}</dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Email</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.show.email", { ns: "starter" }, "Email")}</dt>
             <dd className="flex items-center gap-1.5 text-sm font-medium">
               {record.requester_email ? (
                 <>
@@ -303,7 +351,7 @@ function TicketShowBody({
       <Separator />
 
       <section className="space-y-2">
-        <h3 className="text-sm font-medium">Description</h3>
+        <h3 className="text-sm font-medium">{translate("tickets.fields.description", { ns: "starter" }, "Description")}</h3>
         <p className="text-sm leading-6 whitespace-pre-wrap text-foreground/90">
           {record.description}
         </p>
@@ -312,29 +360,29 @@ function TicketShowBody({
       <Separator />
 
       <section className="space-y-3">
-        <h3 className="text-sm font-medium">Timeline</h3>
+        <h3 className="text-sm font-medium">{translate("tickets.show.timeline", { ns: "starter" }, "Timeline")}</h3>
         <dl className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Created</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.created", { ns: "starter" }, "Created")}</dt>
             <dd className="text-sm font-medium">
               {formatDateTime(record.createdAt, locale)}
             </dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Resolution due</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.resolutionDue", { ns: "starter" }, "Resolution due")}</dt>
             <dd className="text-sm font-medium">
               {formatDateTime(record.resolution_due_at, locale)}
             </dd>
           </div>
           <div className="space-y-1">
-            <dt className="text-xs text-muted-foreground">Resolved</dt>
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.resolved", { ns: "starter" }, "Resolved")}</dt>
             <dd className="text-sm font-medium">
               {record.resolved_at ? (
                 formatDateTime(record.resolved_at, locale)
               ) : (
                 <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="size-3.5" />
-                  pending
+                  {translate("tickets.show.pending", { ns: "starter" }, "pending")}
                 </span>
               )}
             </dd>
@@ -346,6 +394,7 @@ function TicketShowBody({
 }
 
 function TicketConversation({ record }: { record: TicketRecord }) {
+  const translate = useTranslate();
   const [reply, setReply] = useState("");
   const { data: identity } = useGetIdentity<AgentRef & { id: number }>();
   const { result: messagesResult, query: messagesQuery } = useList<TicketMessageRecord>({
@@ -362,13 +411,34 @@ function TicketConversation({ record }: { record: TicketRecord }) {
     pagination: { mode: "server", currentPage: 1, pageSize: 20 },
     queryOptions: { retry: false },
   });
-  const createMessage = useCreate<TicketMessageRecord, HttpError>();
+  const createMessage = useCreate<TicketMessageRecord, HttpError>({
+    successNotification: () => ({
+      message: translate(
+        "tickets.conversation.replySent",
+        { ns: "starter" },
+        "Reply sent"
+      ),
+      type: "success",
+    }),
+    errorNotification: () => ({
+      message: translate(
+        "tickets.conversation.replyError",
+        { ns: "starter" },
+        "Couldn't send the reply"
+      ),
+      type: "error",
+    }),
+  });
   const matchingArticles = articlesResult.data.filter(
     (article) => !record.category || article.category === record.category
   );
   const conversationContext = useAIPageElementHandle({
     id: `ticket-${record.id}-conversation`,
-    title: `Ticket #${record.id}: ${record.subject}`,
+    title: translate(
+      "tickets.conversation.aiContextTitle",
+      { ns: "starter", id: record.id, subject: record.subject },
+      "Ticket #{{id}}: {{subject}}"
+    ),
     kind: "record",
     getContext: () => ({
       ticket: {
@@ -381,7 +451,16 @@ function TicketConversation({ record }: { record: TicketRecord }) {
       },
       conversation: messagesResult.data.map((message) => ({
         direction: message.direction,
-        author: message.direction === "inbound" ? record.requester_name : agentDisplayName(message.author),
+        author: message.direction === "inbound"
+          ? record.requester_name
+          : agentDisplayName(
+              message.author,
+              translate(
+                "tickets.assignee.unknown",
+                { ns: "starter" },
+                "Unknown agent"
+              )
+            ),
         content: message.content,
         sentAt: message.createdAt,
       })),
@@ -394,15 +473,27 @@ function TicketConversation({ record }: { record: TicketRecord }) {
   });
   const aiTasks = useMemo<AIEmployeeTask[]>(() => [
     {
-      title: "Draft a reply",
+      title: translate(
+        "tickets.conversation.aiTaskTitle",
+        { ns: "starter" },
+        "Draft a reply"
+      ),
       autoSend: true,
       message: {
-        system: "You are a warm, concise customer support teammate. Use only the supplied ticket conversation and matching help articles. Never expose internal notes or invent commitments. Draft a customer-ready reply with a clear next step.",
-        user: "Draft the best next customer reply for this ticket. Keep it friendly, specific, and ready to review before sending.",
+        system: translate(
+          "tickets.conversation.aiSystemPrompt",
+          { ns: "starter" },
+          "You are a warm, concise customer support teammate. Use only the supplied ticket conversation and matching help articles. Never expose internal notes or invent commitments. Draft a customer-ready reply with a clear next step."
+        ),
+        user: translate(
+          "tickets.conversation.aiUserPrompt",
+          { ns: "starter" },
+          "Draft the best next customer reply for this ticket. Keep it friendly, specific, and ready to review before sending."
+        ),
         workContext: [conversationContext.context],
       },
     },
-  ], [conversationContext.context]);
+  ], [conversationContext.context, translate]);
   const submitReply = () => {
     const content = reply.trim();
     if (!content || createMessage.mutation.isPending) return;
@@ -421,16 +512,16 @@ function TicketConversation({ record }: { record: TicketRecord }) {
     <section ref={conversationContext.ref} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium">Customer conversation</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Visible customer messages and team replies, in order.</p>
+          <h3 className="text-sm font-medium">{translate("tickets.conversation.title", { ns: "starter" }, "Customer conversation")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{translate("tickets.conversation.description", { ns: "starter" }, "Visible customer messages and team replies, in order.")}</p>
         </div>
-        <AIEmployeeShortcut aiEmployee="ellis" tasks={aiTasks} label="Draft with AI" size={30} className="border-primary/20 bg-primary/5" />
+        <AIEmployeeShortcut aiEmployee="ellis" tasks={aiTasks} label={translate("tickets.conversation.aiAction", { ns: "starter" }, "Draft with AI")} size={30} className="border-primary/20 bg-primary/5" />
       </div>
       <ol className="space-y-3">
         <li className="flex gap-3">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{record.requester_name.slice(0, 1).toUpperCase()}</div>
           <div className="min-w-0 flex-1 rounded-xl border border-primary/10 bg-primary/5 px-3 py-2.5">
-            <div className="flex items-baseline justify-between gap-2"><span className="text-xs font-semibold">{record.requester_name}</span><span className="text-xs text-muted-foreground">Opened ticket</span></div>
+            <div className="flex items-baseline justify-between gap-2"><span className="text-xs font-semibold">{record.requester_name}</span><span className="text-xs text-muted-foreground">{translate("tickets.conversation.opened", { ns: "starter" }, "Opened ticket")}</span></div>
             <p className="mt-1 text-sm leading-6 whitespace-pre-wrap">{record.description}</p>
           </div>
         </li>
@@ -438,22 +529,23 @@ function TicketConversation({ record }: { record: TicketRecord }) {
           <li key={message.id} className="flex gap-3">
             {message.direction === "outbound" ? <AgentAvatar agent={message.author} className="size-7 shrink-0" /> : <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{record.requester_name.slice(0, 1).toUpperCase()}</div>}
             <div className={message.direction === "outbound" ? "min-w-0 flex-1 rounded-xl border bg-card px-3 py-2.5" : "min-w-0 flex-1 rounded-xl border border-primary/10 bg-primary/5 px-3 py-2.5"}>
-              <div className="flex items-baseline justify-between gap-2"><span className="text-xs font-semibold">{message.direction === "outbound" ? agentDisplayName(message.author) : record.requester_name}</span><NoteRelativeTime value={message.createdAt} /></div>
+              <div className="flex items-baseline justify-between gap-2"><span className="text-xs font-semibold">{message.direction === "outbound" ? agentDisplayName(message.author, translate("tickets.assignee.unknown", { ns: "starter" }, "Unknown agent")) : record.requester_name}</span><NoteRelativeTime value={message.createdAt} /></div>
               <p className="mt-1 text-sm leading-6 whitespace-pre-wrap">{message.content}</p>
             </div>
           </li>
         ))}
       </ol>
-      {matchingArticles.length ? <div className="rounded-xl border border-dashed bg-muted/35 p-3"><p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Sparkles className="size-3.5 text-primary" /> AI will use {matchingArticles.length} matching help {matchingArticles.length === 1 ? "article" : "articles"} for a grounded draft.</p></div> : null}
+      {matchingArticles.length ? <div className="rounded-xl border border-dashed bg-muted/35 p-3"><p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Sparkles className="size-3.5 text-primary" /> {translate("tickets.conversation.aiGrounding", { ns: "starter", count: matchingArticles.length }, `AI will use ${matchingArticles.length} matching help ${matchingArticles.length === 1 ? "article" : "articles"} for a grounded draft.`)}</p></div> : null}
       <div className="space-y-2">
-        <Textarea value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Write a customer reply..." className="min-h-28" />
-        <div className="flex justify-end"><Button type="button" size="sm" disabled={!reply.trim() || createMessage.mutation.isPending} onClick={submitReply}><Send /> Send reply</Button></div>
+        <Textarea value={reply} onChange={(event) => setReply(event.target.value)} placeholder={translate("tickets.conversation.replyPlaceholder", { ns: "starter" }, "Write a customer reply...")} className="min-h-28" />
+        <div className="flex justify-end"><Button type="button" size="sm" disabled={!reply.trim() || createMessage.mutation.isPending} onClick={submitReply}><Send /> {translate("tickets.conversation.sendReply", { ns: "starter" }, "Send reply")}</Button></div>
       </div>
     </section>
   );
 }
 
 function TicketNotes({ ticketId }: { ticketId: number }) {
+  const translate = useTranslate();
   const [content, setContent] = useState("");
   const { data: identity } = useGetIdentity<AgentRef & { id: number }>();
   const { result: notesResult, query: notesQuery } = useList<TicketNoteRecord>({
@@ -464,7 +556,24 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
     meta: { appends: ["author"] },
     queryOptions: { retry: false },
   });
-  const createNote = useCreate<TicketNoteRecord, HttpError>();
+  const createNote = useCreate<TicketNoteRecord, HttpError>({
+    successNotification: () => ({
+      message: translate(
+        "tickets.notes.saved",
+        { ns: "starter" },
+        "Internal note added"
+      ),
+      type: "success",
+    }),
+    errorNotification: () => ({
+      message: translate(
+        "tickets.notes.saveError",
+        { ns: "starter" },
+        "Couldn't add the internal note"
+      ),
+      type: "error",
+    }),
+  });
   const notes = notesResult.data;
 
   const submit = () => {
@@ -491,12 +600,15 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
   return (
     <section className="space-y-4">
       <h3 className="text-sm font-medium">
-        Internal notes ({notes.length})
+        {translate("tickets.notes.title", { ns: "starter", count: notes.length }, "Internal notes ({{count}})")}
       </h3>
       {notes.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No notes yet. Keep the private hand-off trail here: what you tried,
-          what the customer said, and why the status moved.
+          {translate(
+            "tickets.notes.empty",
+            { ns: "starter" },
+            "No notes yet. Keep the private hand-off trail here: what you tried, what the customer said, and why the status moved."
+          )}
         </p>
       ) : (
         <ol className="space-y-4">
@@ -506,7 +618,14 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
               <div className="min-w-0 flex-1 rounded-lg border bg-card px-3 py-2">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-medium">
-                    {agentDisplayName(note.author)}
+                    {agentDisplayName(
+                      note.author,
+                      translate(
+                        "tickets.assignee.unknown",
+                        { ns: "starter" },
+                        "Unknown agent"
+                      )
+                    )}
                   </span>
                   <NoteRelativeTime value={note.createdAt} />
                 </div>
@@ -522,7 +641,7 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
         <Textarea
           value={content}
           onChange={(event) => setContent(event.target.value)}
-          placeholder="Add a private internal note..."
+          placeholder={translate("tickets.notes.placeholder", { ns: "starter" }, "Add a private internal note...")}
           className="min-h-24"
         />
         <div className="flex justify-end">
@@ -533,7 +652,7 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
             onClick={submit}
           >
             <Send />
-            Add note
+            {translate("tickets.notes.add", { ns: "starter" }, "Add note")}
           </Button>
         </div>
       </div>
@@ -542,11 +661,16 @@ function TicketNotes({ ticketId }: { ticketId: number }) {
 }
 
 function NoteRelativeTime({ value }: { value: string }) {
+  const translate = useTranslate();
   const locale = useGetLocale()();
   const diff = Date.now() - new Date(value).getTime();
   const text =
     diff < 60 * 60 * 1000
-      ? `${Math.max(1, Math.floor(diff / 60000))}m ago`
+      ? translate(
+          "tickets.time.minutesAgo",
+          { ns: "starter", count: Math.max(1, Math.floor(diff / 60000)) },
+          "{{count}}m ago"
+        )
       : new Intl.DateTimeFormat(locale, {
           dateStyle: "medium",
           timeStyle: "short",
