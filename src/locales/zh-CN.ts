@@ -1,5 +1,5 @@
 export const starter = {
-  "shell.workspace": "Sadesk 客服工作台",
+  "shell.workspace": "Help Desk 客服工作台",
   "shell.settings": "设置",
   "shell.footer.freedom": "支持工作，井井有条。",
   "shell.footer.reliabilitySuffix": "保障每个请求可靠流转。",
@@ -177,7 +177,7 @@ export const starter = {
   "tickets.form.validation.sourceRequired": "请选择来源",
   "tickets.form.validation.requesterNameRequired": "请输入提交人姓名",
   "tickets.form.responseDeadline": "响应期限：{{hours}} 小时（截至 {{deadline}}）",
-  "tickets.form.aiHint": "粘贴客户的纯文本诉求，让 AI 建议问题分类和优先级；创建工单前仍由你确认。",
+  "tickets.form.aiHint": "已经填好主题和描述？让 AI 员工复核问题分类和优先级。",
   "tickets.form.aiAction": "AI 智能分诊",
   "tickets.form.aiContextTitle": "新工单登记",
   "tickets.form.aiTaskTitle": "建议问题分类和优先级",
@@ -490,4 +490,29 @@ export const starter = {
   "auth.brand.foundationBody": "可靠的数据、权限、工作流与治理。",
   "auth.brand.tagline": "上层自由，底层可靠。",
   "auth.brand.headline": "让 AI 自由构建，NocoBase 保障可靠。",
+  // 可复用 AI 填单面板（src/components/ai-fill）
+  "ai.fill.title": "AI 智能填单",
+  "ai.fill.action": "AI 智能填单",
+  "ai.fill.analyzing": "正在分析...",
+  "ai.fill.undo": "撤销",
+  "ai.fill.emptyValue": "（空）",
+  "ai.fill.validation.describeFirst": "请先描述你的需求，AI 才能填写表单。",
+  "ai.fill.mode.idle": "你的描述将发送至本服务器的 AI 助手",
+  "ai.fill.mode.ai": "由 AI 填写 \u00b7 你的描述已发送至本服务器的 AI 助手",
+  "ai.fill.mode.local": "本地分析 \u00b7 AI 助手当前不可用",
+  "ai.fill.updatedFields": "已更新 {{count}} 个字段",
+  "ai.fill.noChanges": "无需改动 \u2014 表单内容已与你的描述一致。",
+  "ai.fill.skipped": "已忽略 {{count}} 个本表单不接受的值：{{names}}",
+  "ai.fill.error.timeout":
+    "AI 助手响应超时，未填写任何内容 \u2014 请重试或手动填写。",
+  "ai.fill.error.noModel": "本服务器未启用任何 AI 模型，无法自动填写表单。",
+  "ai.fill.error.unparseable": "AI 助手返回的内容无法解析，未填写任何内容。",
+  "ai.fill.error.nothingUsable": "AI 助手未返回本表单可接受的值，未填写任何内容。",
+  "ai.fill.error.unavailable":
+    "AI 助手当前不可用，未填写任何内容 \u2014 请手动填写表单。",
+  "tickets.form.aiFillTitle": "AI 智能填单",
+  "tickets.form.aiFillDescription": "用自然语言粘贴客户的诉求，AI 助手会自动整理成工单。",
+  "tickets.form.aiFillLabel": "描述客户的问题",
+  "tickets.form.aiFillPlaceholder":
+    "例如：Maria Lopez 来邮件说昨天调整计费后无法登录，团队已经停工。",
 } as const;

@@ -63,7 +63,7 @@ const MODEL_BAR: Record<string, string> = {
 // pull / run / ship the source. Everything host-related is derived at runtime
 // (origin + Vite base) so the same build works on any domain.
 
-const APP_TITLE = "Sadesk Helpdesk";
+const APP_TITLE = "Help Desk";
 const PORTAL_NAME_FALLBACK = "desk";
 
 function portalName() {

@@ -57,7 +57,7 @@ function App() {
                     warnWhenUnsavedChanges: true,
                     disableTelemetry: true,
                     title: {
-                      text: "Sadesk",
+                      text: "Help Desk",
                       icon: <BrandLogo className="size-14 rounded-2xl" />,
                     },
                   }}
@@ -66,7 +66,7 @@ function App() {
 
                   <Toaster />
                   <UnsavedChangesNotifier />
-                  <DocumentTitleHandler appName="Sadesk" />
+                  <DocumentTitleHandler appName="Help Desk" />
                 </Refine>
               </AclStoreProvider>
             </SystemSettingsProvider>

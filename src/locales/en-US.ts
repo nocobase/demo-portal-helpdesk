@@ -1,5 +1,5 @@
 export const starter = {
-  "shell.workspace": "Sadesk support workspace",
+  "shell.workspace": "Help Desk support workspace",
   "shell.settings": "Settings",
   "shell.footer.freedom": "Support, organized.",
   "shell.footer.reliabilitySuffix": "keeps every request on track.",
@@ -180,7 +180,7 @@ export const starter = {
   "tickets.form.validation.sourceRequired": "Source is required",
   "tickets.form.validation.requesterNameRequired": "Requester name is required",
   "tickets.form.responseDeadline": "Response deadline: {{hours}}h (by {{deadline}})",
-  "tickets.form.aiHint": "Paste the customer's plain-text request, then have AI suggest a category and priority. You stay in control before creating the ticket.",
+  "tickets.form.aiHint": "Already typed the subject and description? Have the AI employee re-check just the category and priority.",
   "tickets.form.aiAction": "Triage with AI",
   "tickets.form.aiContextTitle": "New ticket intake",
   "tickets.form.aiTaskTitle": "Suggest category and priority",
@@ -493,4 +493,37 @@ export const starter = {
   "auth.brand.foundationBody": "Reliable data, access control, workflows and governance.",
   "auth.brand.tagline": "Freedom above. Confidence below.",
   "auth.brand.headline": "Let AI build freely. NocoBase keeps it reliable.",
+  // Reusable AI form-fill panel (src/components/ai-fill)
+  "ai.fill.title": "AI assist",
+  "ai.fill.action": "Fill with AI",
+  "ai.fill.analyzing": "Analyzing...",
+  "ai.fill.undo": "Undo",
+  "ai.fill.emptyValue": "(empty)",
+  "ai.fill.validation.describeFirst":
+    "Describe what you need first, so AI assist can fill the form.",
+  "ai.fill.mode.idle": "Your description is sent to this server's AI assistant",
+  "ai.fill.mode.ai":
+    "Filled by AI \u00b7 your description was sent to this server's AI assistant",
+  "ai.fill.mode.local": "Local analysis \u00b7 the AI assistant was unavailable",
+  "ai.fill.updatedFields": "Updated {{count}} field(s)",
+  "ai.fill.noChanges":
+    "Nothing to change \u2014 the form already matches your description.",
+  "ai.fill.skipped":
+    "Ignored {{count}} value(s) this form does not accept: {{names}}",
+  "ai.fill.error.timeout":
+    "The AI assistant did not respond in time. Nothing was filled \u2014 please try again or fill the form manually.",
+  "ai.fill.error.noModel":
+    "No AI model is enabled on this server, so the form could not be filled automatically.",
+  "ai.fill.error.unparseable":
+    "The AI assistant returned a response that could not be read. Nothing was filled.",
+  "ai.fill.error.nothingUsable":
+    "The AI assistant did not return any value this form accepts. Nothing was filled.",
+  "ai.fill.error.unavailable":
+    "The AI assistant is unavailable right now. Nothing was filled \u2014 please fill the form manually.",
+  "tickets.form.aiFillTitle": "AI assist",
+  "tickets.form.aiFillDescription":
+    "Paste the customer's request in plain language. AI assist will structure the ticket for you.",
+  "tickets.form.aiFillLabel": "Describe the customer's issue",
+  "tickets.form.aiFillPlaceholder":
+    "Example: Maria Lopez emailed that she cannot log in after yesterday's billing change and her team is blocked.",
 } as const;

@@ -36,7 +36,7 @@ export function BrandWordmark({ className }: BrandLogoProps) {
     >
       <BrandLogo className="size-7" />
       <span className="font-heading text-lg font-semibold tracking-tight">
-        Sadesk
+        Help Desk
       </span>
     </span>
   );
