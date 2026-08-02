@@ -1,7 +1,7 @@
 import { useGetLocale, useList, useTranslate } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
-import { AlarmClockOff, ShieldCheck, Timer } from "lucide-react";
+import { AlarmClockOff, Pencil, Plus, ShieldCheck, Timer } from "lucide-react";
 import { useMemo } from "react";
 import { Outlet } from "react-router";
 
@@ -9,6 +9,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataTableFilterCombobox } from "@/components/data-table/data-table-filter";
 import { DataTableSorter } from "@/components/data-table/data-table-sorter";
 import { Breadcrumb } from "@/components/app-shell/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "./badges";
 import { CategoryBadge, SlaBadge } from "./badges";
 import {
@@ -226,6 +227,10 @@ export function SlaPage() {
               <Timer className="size-3.5" />
               {translate("sla.summary.dueWithin", { ns: "starter", count: dueSoonCount, hours: 2 }, "{{count}} due within {{hours}}h")}
             </span>
+            <Button type="button" size="sm" onClick={() => openChild("policy/create")}>
+              <Plus />
+              {translate("slaPolicies.actions.new", { ns: "starter" }, "New SLA policy")}
+            </Button>
           </div>
         </div>
       </div>
@@ -233,8 +238,14 @@ export function SlaPage() {
         {policiesResult.data.map((policy) => (
           <section key={policy.id} className="rounded-xl border bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-              <div><p className="text-sm font-semibold">{policy.name}</p><div className="mt-2"><PriorityBadge priority={policy.priority} /></div></div>
-              <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><ShieldCheck className="size-4" /></span>
+              <button type="button" className="min-w-0 text-left" onClick={() => openChild(`policy/show/${policy.id}`)}>
+                <p className="truncate text-sm font-semibold hover:underline">{policy.name}</p>
+                <div className="mt-2"><PriorityBadge priority={policy.priority} /></div>
+              </button>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button type="button" variant="ghost" size="icon" aria-label={translate("slaPolicies.actions.edit", { ns: "starter" }, "Edit policy")} title={translate("slaPolicies.actions.edit", { ns: "starter" }, "Edit policy")} onClick={() => openChild(`policy/edit/${policy.id}`)}><Pencil /></Button>
+                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><ShieldCheck className="size-4" /></span>
+              </div>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{translate("sla.policy.response", { ns: "starter" }, "First response")}</dt><dd className="mt-1 font-semibold">{translate("sla.policy.minutes", { ns: "starter", count: policy.response_mins }, "{{count}} min")}</dd></div><div><dt className="text-muted-foreground">{translate("sla.policy.resolve", { ns: "starter" }, "Resolution")}</dt><dd className="mt-1 font-semibold">{translate("sla.policy.minutes", { ns: "starter", count: policy.resolve_mins }, "{{count}} min")}</dd></div></dl>
           </section>

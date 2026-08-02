@@ -201,7 +201,7 @@ export function TicketShow() {
 
             <Separator />
 
-            <TicketShowBody record={record} locale={locale} onUpdated={() => query.refetch()} />
+            <TicketShowBody record={record} locale={locale} onUpdated={() => query.refetch()} openChild={openChild} />
 
             <Separator />
 
@@ -225,10 +225,12 @@ function TicketShowBody({
   record,
   locale,
   onUpdated,
+  openChild,
 }: {
   record: TicketRecord;
   locale?: string;
   onUpdated: () => void;
+  openChild: (to: string) => void;
 }) {
   const translate = useTranslate();
   const { result: agentsResult } = useList<AgentRef>({
@@ -261,8 +263,22 @@ function TicketShowBody({
               {record.category ? translateTicketCategory(translate, record.category) : "-"}
             </dd>
           </div>
-          <div className="space-y-1"><dt className="text-xs text-muted-foreground">{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</dt><dd className="text-sm font-medium">{record.queue?.name ?? "-"}</dd></div>
-          <div className="space-y-1"><dt className="text-xs text-muted-foreground">{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</dt><dd className="text-sm font-medium">{record.ticket_type?.name ?? "-"}</dd></div>
+          <div className="space-y-1">
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</dt>
+            <dd className="text-sm font-medium">
+              {record.queue ? (
+                <button type="button" className="hover:underline" onClick={() => openChild(`queue/show/${record.queue_id}`)}>{record.queue.name}</button>
+              ) : "-"}
+            </dd>
+          </div>
+          <div className="space-y-1">
+            <dt className="text-xs text-muted-foreground">{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</dt>
+            <dd className="text-sm font-medium">
+              {record.ticket_type ? (
+                <button type="button" className="hover:underline" onClick={() => openChild(`ticket-type/show/${record.ticket_type_id}`)}>{record.ticket_type.name}</button>
+              ) : "-"}
+            </dd>
+          </div>
           <div className="space-y-1">
             <dt className="text-xs text-muted-foreground">{translate("tickets.fields.assignee", { ns: "starter" }, "Assignee")}</dt>
             <dd>
@@ -304,7 +320,7 @@ function TicketShowBody({
           </div>
           <div className="space-y-1">
             <dt className="text-xs text-muted-foreground">{translate("tickets.fields.sla", { ns: "starter" }, "SLA")}</dt>
-            <dd className="flex items-center gap-2">
+            <dd className="flex flex-wrap items-center gap-2">
               <SlaBadge
                 state={slaState}
                 detail={
@@ -321,6 +337,15 @@ function TicketShowBody({
                     "due {{deadline}}"
                   )}
                 </span>
+              ) : null}
+              {record.sla_policy ? (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:underline"
+                  onClick={() => openChild(`sla-policy/show/${record.sla_policy_id}`)}
+                >
+                  {translate("tickets.show.slaPolicyLink", { ns: "starter", policy: record.sla_policy.name }, "Policy: {{policy}}")}
+                </button>
               ) : null}
             </dd>
           </div>
@@ -347,7 +372,13 @@ function TicketShowBody({
         <dl className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <dt className="text-xs text-muted-foreground">{translate("tickets.show.name", { ns: "starter" }, "Name")}</dt>
-            <dd className="text-sm font-medium">{record.requester_name}</dd>
+            <dd className="text-sm font-medium">
+              {record.requester_id ? (
+                <button type="button" className="hover:underline" onClick={() => openChild(`requester/show/${record.requester_id}`)}>{record.requester_name}</button>
+              ) : (
+                record.requester_name
+              )}
+            </dd>
           </div>
           <div className="space-y-1">
             <dt className="text-xs text-muted-foreground">{translate("tickets.show.email", { ns: "starter" }, "Email")}</dt>

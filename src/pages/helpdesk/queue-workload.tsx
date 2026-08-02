@@ -1,8 +1,9 @@
 import { useList, useTranslate } from "@refinedev/core";
-import { ArrowUpRight, Inbox, UsersRound } from "lucide-react";
+import { ArrowUpRight, Inbox, Pencil, Plus, UsersRound } from "lucide-react";
 import { Outlet } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnalyticsHeader } from "./analytics-ui";
@@ -32,7 +33,12 @@ export function QueueWorkloadPage() {
       <AnalyticsHeader
         title={translate("queues.title", { ns: "starter" }, "Queue workload")}
         description={translate("queues.description", { ns: "starter" }, "Balance active work across specialist teams and spot queues with concentrated SLA risk.")}
-        actions={<Badge variant="outline" className="h-8 gap-2"><Inbox className="size-3.5" />{translate("queues.activeTotal", { ns: "starter", count: tickets.data.length }, "{{count}} active tickets")}</Badge>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="h-8 gap-2"><Inbox className="size-3.5" />{translate("queues.activeTotal", { ns: "starter", count: tickets.data.length }, "{{count}} active tickets")}</Badge>
+            <Button type="button" size="sm" onClick={() => openChild("create")}><Plus />{translate("queues.actions.new", { ns: "starter" }, "New queue")}</Button>
+          </div>
+        }
       />
 
       {queuesQuery.isLoading || ticketsQuery.isLoading ? (
@@ -47,11 +53,14 @@ export function QueueWorkloadPage() {
               <section key={queue.id} className="overflow-hidden rounded-xl border bg-card shadow-sm">
                 <header className="border-b bg-muted/25 p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">{queue.name}</h3>
+                    <button type="button" className="min-w-0 text-left hover:underline" onClick={() => openChild(`show/${queue.id}`)}>
+                      <h3 className="truncate font-semibold">{queue.name}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">{translate("queues.capacity", { ns: "starter", count: queueTickets.length }, "{{count}} tickets in flight")}</p>
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Button type="button" variant="ghost" size="icon" aria-label={translate("queues.actions.edit", { ns: "starter" }, "Edit queue")} title={translate("queues.actions.edit", { ns: "starter" }, "Edit queue")} onClick={() => openChild(`edit/${queue.id}`)}><Pencil /></Button>
+                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><UsersRound className="size-4" /></div>
                     </div>
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><UsersRound className="size-4" /></div>
                   </div>
                   <Progress className="mt-3 h-1.5" value={(queueTickets.length / maxLoad) * 100} />
                   <div className="mt-3 flex gap-2 text-xs">
