@@ -11,6 +11,10 @@ import {
 import { Cell, Pie, PieChart } from "recharts";
 
 import { Breadcrumb } from "@/components/app-shell/breadcrumb";
+import {
+  BuildStoryBanner,
+  type BuildStory,
+} from "@/components/build-story/build-story-banner";
 import { cn } from "@/lib/utils";
 import { nocobaseClient } from "@nocobase/portal-sdk/client";
 import { PriorityBadge, SlaBadge, TicketStatusBadge } from "./badges";
@@ -29,6 +33,20 @@ import {
   type TicketStatus,
   type TicketPriority,
 } from "./lib";
+
+// How this portal was built — effective (active) time, derived from the build's
+// git commit bursts. Shown in the pinned banner on the dashboard.
+const BUILD_STORY: BuildStory = {
+  models: ["GPT-5.6 sol", "Opus 4.8"],
+  moduleCount: 5,
+  moduleLabelKey: "buildStory.modules",
+  tracks: [
+    { labelKey: "buildStory.phase.scaffold", models: ["GPT-5.6 sol"], start: 0, minutes: 20 },
+    { labelKey: "buildStory.phase.style", models: ["Opus 4.8"], start: 20, minutes: 10 },
+    { labelKey: "buildStory.phase.enrich", models: ["Opus 4.8"], start: 30, minutes: 15 },
+    { labelKey: "buildStory.phase.finalize", models: ["Opus 4.8"], start: 45, minutes: 5 },
+  ],
+};
 
 type CountRow = { n: number };
 type StatusRow = { n: number; status: TicketStatus };
@@ -135,6 +153,8 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <BuildStoryBanner story={BUILD_STORY} />
+
       <div className="flex flex-col gap-3">
         <div className="flex items-center text-muted-foreground">
           <Breadcrumb />
