@@ -515,4 +515,8 @@ export const starter = {
   "tickets.form.aiFillLabel": "描述客户的问题",
   "tickets.form.aiFillPlaceholder":
     "例如：Maria Lopez 来邮件说昨天调整计费后无法登录，团队已经停工。",
+  "buildStory.copyBuildPrompt": "复制复刻提示词",
+  "buildStory.copyBuildPromptHint": "复制一段提示词，用你自己的编码 agent 从零复刻这个应用",
+  "buildStory.copyConnectPrompt": "复制接入提示词",
+  "buildStory.copyConnectPromptHint": "复制一段提示词，把你的编码 agent 接入本实例来修改这个应用",
 } as const;

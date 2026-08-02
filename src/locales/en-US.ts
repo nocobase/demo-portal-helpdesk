@@ -526,4 +526,8 @@ export const starter = {
   "tickets.form.aiFillLabel": "Describe the customer's issue",
   "tickets.form.aiFillPlaceholder":
     "Example: Maria Lopez emailed that she cannot log in after yesterday's billing change and her team is blocked.",
+  "buildStory.copyBuildPrompt": "Copy build prompt",
+  "buildStory.copyBuildPromptHint": "Copy a prompt that rebuilds this app from scratch with your own coding agent",
+  "buildStory.copyConnectPrompt": "Copy connect prompt",
+  "buildStory.copyConnectPromptHint": "Copy a prompt that connects your coding agent to this instance so it can modify the app",
 } as const;
