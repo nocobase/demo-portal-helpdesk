@@ -1,7 +1,7 @@
 import { useGetLocale, useList, useTranslate } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
-import { AlarmClockOff, Timer } from "lucide-react";
+import { AlarmClockOff, ShieldCheck, Timer } from "lucide-react";
 import { useMemo } from "react";
 import { Outlet } from "react-router";
 
@@ -21,6 +21,7 @@ import {
   TICKET_PRIORITIES,
   translateTicketPriority,
   type AgentRef,
+  type SlaPolicyRecord,
   type TicketRecord,
 } from "./lib";
 import { AgentAvatar } from "./tickets/ticket-list";
@@ -36,6 +37,11 @@ export function SlaPage() {
     pagination: { mode: "server", currentPage: 1, pageSize: 200 },
     errorNotification: false,
     queryOptions: { retry: false },
+  });
+  const { result: policiesResult } = useList<SlaPolicyRecord>({
+    resource: "desk_sla_policies",
+    pagination: { mode: "server", currentPage: 1, pageSize: 20 },
+    sorters: [{ field: "resolve_mins", order: "asc" }],
   });
   const agentOptions = useMemo(
     () =>
@@ -179,7 +185,7 @@ export function SlaPage() {
           { field: "status", operator: "in", value: ACTIVE_STATUSES },
         ],
       },
-      meta: { appends: ["assignee"] },
+      meta: { appends: ["assignee", "sla_policy", "queue"] },
       sorters: {
         initial: [{ field: "resolution_due_at", order: "asc" }],
       },
@@ -202,7 +208,7 @@ export function SlaPage() {
         </div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-3xl font-semibold tracking-[-0.035em]">{translate("navigation.sla", { ns: "starter" }, "SLA")}</h2>
+            <h2 className="text-3xl font-semibold tracking-[-0.035em]">{translate("sla.title", { ns: "starter" }, "SLA & escalations")}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {translate(
                 "sla.description",
@@ -222,6 +228,17 @@ export function SlaPage() {
             </span>
           </div>
         </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {policiesResult.data.map((policy) => (
+          <section key={policy.id} className="rounded-xl border bg-card p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-sm font-semibold">{policy.name}</p><div className="mt-2"><PriorityBadge priority={policy.priority} /></div></div>
+              <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><ShieldCheck className="size-4" /></span>
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{translate("sla.policy.response", { ns: "starter" }, "First response")}</dt><dd className="mt-1 font-semibold">{translate("sla.policy.minutes", { ns: "starter", count: policy.response_mins }, "{{count}} min")}</dd></div><div><dt className="text-muted-foreground">{translate("sla.policy.resolve", { ns: "starter" }, "Resolution")}</dt><dd className="mt-1 font-semibold">{translate("sla.policy.minutes", { ns: "starter", count: policy.resolve_mins }, "{{count}} min")}</dd></div></dl>
+          </section>
+        ))}
       </div>
       <DataTable table={table} />
       <Outlet />

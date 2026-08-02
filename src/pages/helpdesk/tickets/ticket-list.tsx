@@ -222,6 +222,7 @@ export function TicketList() {
         enableSorting: false,
         cell: ({ getValue }) => getValue() || "-",
       }),
+      columnHelper.display({ id: "routing", header: translate("tickets.fields.routing", { ns: "starter" }, "Routing"), enableSorting: false, cell: ({ row }) => <div className="min-w-32"><p className="text-sm font-medium">{row.original.queue?.name ?? "-"}</p><p className="text-xs text-muted-foreground">{row.original.ticket_type?.name ?? "-"}</p></div> }),
       columnHelper.accessor((record) => record.assigneeId, {
         id: "assignee.id",
         header: ({ column, table }) => (
@@ -338,7 +339,7 @@ export function TicketList() {
       resource: "desk_tickets",
       syncWithLocation: false,
       meta: {
-        appends: ["assignee"],
+        appends: ["assignee", "queue", "ticket_type", "requester", "sla_policy"],
       },
       sorters: {
         initial: [{ field: "createdAt", order: "desc" }],

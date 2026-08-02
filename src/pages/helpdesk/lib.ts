@@ -31,8 +31,22 @@ export type TicketRecord = {
   requester_email?: string | null;
   assigneeId?: number | null;
   assignee?: AgentRef | null;
+  queue_id?: number | null;
+  queue?: NamedRecord | null;
+  ticket_type_id?: number | null;
+  ticket_type?: NamedRecord | null;
+  requester_id?: number | null;
+  requester?: RequesterRecord | null;
+  sla_policy_id?: number | null;
+  sla_policy?: SlaPolicyRecord | null;
+  response_due_at?: string | null;
+  first_responded_at?: string | null;
   resolution_due_at?: string | null;
   resolved_at?: string | null;
+  resolution_mins?: number | null;
+  sla_breached?: boolean;
+  response_breached?: boolean;
+  resolution_breached?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,7 +77,41 @@ export type HelpArticleRecord = {
   body: string;
   category?: TicketCategory | null;
   published: boolean;
+  article_category_id?: number | null;
+  article_category?: NamedRecord | null;
+  helpful_yes?: number | null;
+  helpful_no?: number | null;
   updatedAt: string;
+};
+
+export type NamedRecord = { id: number; name: string };
+
+export type SlaPolicyRecord = NamedRecord & {
+  priority: TicketPriority;
+  response_mins: number;
+  resolve_mins: number;
+};
+
+export type RequesterRecord = NamedRecord & {
+  email: string;
+  company: string;
+  createdAt?: string;
+};
+
+export type MacroRecord = {
+  id: number;
+  title: string;
+  body: string;
+  category: TicketCategory;
+};
+
+export type CsatRecord = {
+  id: number;
+  score: number;
+  comment?: string | null;
+  ticket_id: number;
+  ticket?: TicketRecord | null;
+  createdAt: string;
 };
 
 export const TICKET_STATUSES: TicketStatus[] = [
@@ -200,6 +248,12 @@ export const computeResolutionDueAt = (
   new Date(
     from.getTime() + SLA_HOURS[priority] * 60 * 60 * 1000
   ).toISOString();
+
+export const computeDueAt = (minutes: number, from: Date = new Date()) =>
+  new Date(from.getTime() + minutes * 60 * 1000).toISOString();
+
+export const minutesBetween = (start: string, end: string) =>
+  Math.max(0, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000));
 
 export const formatRelativeDeadline = (
   dueAt: Date,

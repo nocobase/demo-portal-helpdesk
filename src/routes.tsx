@@ -5,6 +5,11 @@ import {
   SquareKanban,
   Ticket,
   Timer,
+  UsersRound,
+  BarChart3,
+  Smile,
+  Gauge,
+  Layers3,
 } from "lucide-react";
 
 import { AccessDenied } from "@/components/access-control/access-denied";
@@ -17,6 +22,12 @@ import { TicketCreate } from "@/pages/helpdesk/tickets/ticket-create";
 import { TicketEdit } from "@/pages/helpdesk/tickets/ticket-edit";
 import { TicketList } from "@/pages/helpdesk/tickets/ticket-list";
 import { TicketShow } from "@/pages/helpdesk/tickets/ticket-show";
+import { QueueWorkloadPage } from "@/pages/helpdesk/queue-workload";
+import { CsatPage } from "@/pages/helpdesk/csat";
+import { RequestersPage } from "@/pages/helpdesk/requesters";
+import { RequesterShow } from "@/pages/helpdesk/requester-show";
+import { AgentPerformancePage } from "@/pages/helpdesk/agent-performance";
+import { ReportsPage } from "@/pages/helpdesk/reports";
 
 // Set this to false when the application no longer needs the example routes
 // contributed by installed Registry extensions. Providers, adapters, and the
@@ -186,7 +197,7 @@ export const appRoutes = defineAppRoutes([
         label: "SLA",
         i18nKey: "navigation.sla",
         i18nOptions: { ns: "starter" },
-        priority: 4,
+        priority: 5,
         icon: <Timer />,
       },
     },
@@ -214,7 +225,7 @@ export const appRoutes = defineAppRoutes([
         label: "Help library",
         i18nKey: "navigation.helpLibrary",
         i18nOptions: { ns: "starter" },
-        priority: 5,
+        priority: 7,
         icon: <BookOpenText />,
         description:
           "Reusable support guidance for consistent, customer-friendly replies.",
@@ -222,5 +233,37 @@ export const appRoutes = defineAppRoutes([
         acl: { type: "collection" },
       },
     },
+  },
+  {
+    name: "desk_queues",
+    path: "/queues",
+    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><QueueWorkloadPage /></CanAccess>,
+    resource: { meta: { label: "Queue workload", i18nKey: "queues.title", i18nOptions: { ns: "starter" }, priority: 4, icon: <Layers3 />, acl: { type: "collection" } } },
+    children: [{ name: "desk_queues.ticket", path: ":id", element: ticketDetail(), children: [{ name: "desk_queues.ticket.edit", path: "edit", element: ticketEdit() }] }],
+  },
+  {
+    name: "desk_requesters",
+    path: "/requesters",
+    element: <CanAccess resource="desk_requesters" action="list" fallback={ticketAccessDenied}><RequestersPage /></CanAccess>,
+    resource: { meta: { label: "Requesters", i18nKey: "requesters.title", i18nOptions: { ns: "starter" }, priority: 6, icon: <UsersRound />, acl: { type: "collection" } } },
+    children: [{ name: "desk_requesters.show", path: ":id", element: <RequesterShow />, children: [{ name: "desk_requesters.ticket", path: "tickets/:id", element: ticketDetail(), children: [{ name: "desk_requesters.ticket.edit", path: "edit", element: ticketEdit() }] }] }],
+  },
+  {
+    name: "desk_csat",
+    path: "/csat",
+    element: <CanAccess resource="desk_csat" action="list" fallback={ticketAccessDenied}><CsatPage /></CanAccess>,
+    resource: { meta: { label: "Customer satisfaction", i18nKey: "csat.title", i18nOptions: { ns: "starter" }, priority: 8, icon: <Smile />, acl: { type: "collection" } } },
+  },
+  {
+    name: "agent-performance",
+    path: "/performance",
+    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><AgentPerformancePage /></CanAccess>,
+    resource: { meta: { label: "Agent performance", i18nKey: "performance.title", i18nOptions: { ns: "starter" }, priority: 9, icon: <Gauge /> } },
+  },
+  {
+    name: "reports",
+    path: "/reports",
+    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><ReportsPage /></CanAccess>,
+    resource: { meta: { label: "Reports", i18nKey: "reports.title", i18nOptions: { ns: "starter" }, priority: 10, icon: <BarChart3 /> } },
   },
 ]);

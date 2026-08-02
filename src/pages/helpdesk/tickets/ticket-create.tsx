@@ -1,4 +1,4 @@
-import { useTranslate, type HttpError } from "@refinedev/core";
+import { useList, useTranslate, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useMemo } from "react";
 import { useRouteSurfaceClose } from "@nocobase/portal-sdk/routing";
@@ -11,7 +11,7 @@ import {
   RouteDrawerFooter,
   useRefineUnsavedChangesGuard,
 } from "@/extensions/nocobase-route-surfaces";
-import { computeResolutionDueAt, type TicketRecord, type TicketPriority } from "../lib";
+import { computeDueAt, computeResolutionDueAt, type SlaPolicyRecord, type TicketRecord, type TicketPriority } from "../lib";
 import {
   TicketFormFields,
   type TicketFormValues,
@@ -42,6 +42,7 @@ export function TicketCreate() {
 function TicketCreateForm() {
   const translate = useTranslate();
   const close = useRouteSurfaceClose();
+  const { result: policies } = useList<SlaPolicyRecord>({ resource: "desk_sla_policies", pagination: { mode: "server", currentPage: 1, pageSize: 20 } });
   const {
     refineCore: { onFinish },
     ...form
@@ -63,6 +64,9 @@ function TicketCreateForm() {
       requester_name: "",
       requester_email: "",
       assigneeId: "",
+      queue_id: "",
+      ticket_type_id: "",
+      requester_id: "",
     },
   });
   const aiFormRef = useAIForm({
@@ -98,7 +102,7 @@ function TicketCreateForm() {
       <form
         onSubmit={form.handleSubmit((values) =>
           onFinish(
-            toCreatePayload(values) as unknown as TicketFormValues
+            toCreatePayload(values, policies.data.find((policy) => policy.priority === values.priority)) as unknown as TicketFormValues
           )
         )}
         className="flex min-h-0 flex-1 flex-col"
@@ -128,7 +132,7 @@ function TicketCreateForm() {
   );
 }
 
-export function toCreatePayload(values: TicketFormValues) {
+export function toCreatePayload(values: TicketFormValues, policy?: SlaPolicyRecord) {
   return {
     subject: values.subject,
     description: values.description,
@@ -139,8 +143,17 @@ export function toCreatePayload(values: TicketFormValues) {
     requester_name: values.requester_name,
     requester_email: values.requester_email || null,
     assigneeId: values.assigneeId ? Number(values.assigneeId) : null,
+    queue_id: values.queue_id ? Number(values.queue_id) : null,
+    ticket_type_id: values.ticket_type_id ? Number(values.ticket_type_id) : null,
+    requester_id: values.requester_id ? Number(values.requester_id) : null,
+    sla_policy_id: policy?.id ?? null,
+    response_due_at: policy ? computeDueAt(policy.response_mins) : null,
     resolution_due_at: computeResolutionDueAt(
       values.priority as TicketPriority
     ),
+    ...(policy ? { resolution_due_at: computeDueAt(policy.resolve_mins) } : {}),
+    sla_breached: false,
+    response_breached: false,
+    resolution_breached: false,
   };
 }

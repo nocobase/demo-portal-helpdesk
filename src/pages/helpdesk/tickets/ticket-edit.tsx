@@ -1,4 +1,4 @@
-import { useTranslate, type HttpError } from "@refinedev/core";
+import { useList, useTranslate, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useEffect } from "react";
 import { useParams } from "react-router";
@@ -14,6 +14,8 @@ import {
 } from "@/extensions/nocobase-route-surfaces";
 import {
   computeResolutionDueAt,
+  computeDueAt,
+  type SlaPolicyRecord,
   type TicketPriority,
   type TicketRecord,
 } from "../lib";
@@ -48,6 +50,7 @@ export function TicketEdit() {
 function TicketEditForm({ ticketId }: { ticketId?: string }) {
   const translate = useTranslate();
   const close = useRouteSurfaceClose();
+  const { result: policies } = useList<SlaPolicyRecord>({ resource: "desk_sla_policies", pagination: { mode: "server", currentPage: 1, pageSize: 20 } });
   const {
     refineCore: { onFinish, query },
     ...form
@@ -57,7 +60,7 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
       action: "edit",
       id: ticketId,
       redirect: false,
-      meta: { appends: ["assignee"] },
+      meta: { appends: ["assignee", "queue", "ticket_type", "requester", "sla_policy"] },
       onMutationSuccess: () => {
         close({ skipBeforeClose: true });
       },
@@ -71,6 +74,9 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
       requester_name: "",
       requester_email: "",
       assigneeId: "",
+      queue_id: "",
+      ticket_type_id: "",
+      requester_id: "",
     },
   });
   const record = query?.data?.data;
@@ -86,6 +92,9 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
       requester_name: record.requester_name ?? "",
       requester_email: record.requester_email ?? "",
       assigneeId: record.assigneeId != null ? String(record.assigneeId) : "",
+      queue_id: record.queue_id != null ? String(record.queue_id) : "",
+      ticket_type_id: record.ticket_type_id != null ? String(record.ticket_type_id) : "",
+      requester_id: record.requester_id != null ? String(record.requester_id) : "",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record]);
@@ -101,7 +110,7 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
       <form
         onSubmit={form.handleSubmit((values) =>
           onFinish(
-            toUpdatePayload(values, originalPriority) as unknown as TicketFormValues
+            toUpdatePayload(values, originalPriority, policies.data.find((policy) => policy.priority === values.priority)) as unknown as TicketFormValues
           )
         )}
         className="flex min-h-0 flex-1 flex-col"
@@ -127,7 +136,7 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
   );
 }
 
-function toUpdatePayload(values: TicketFormValues, originalPriority: string) {
+function toUpdatePayload(values: TicketFormValues, originalPriority: string, policy?: SlaPolicyRecord) {
   const payload: Record<string, unknown> = {
     subject: values.subject,
     description: values.description,
@@ -137,11 +146,22 @@ function toUpdatePayload(values: TicketFormValues, originalPriority: string) {
     requester_name: values.requester_name,
     requester_email: values.requester_email || null,
     assigneeId: values.assigneeId ? Number(values.assigneeId) : null,
+    queue_id: values.queue_id ? Number(values.queue_id) : null,
+    ticket_type_id: values.ticket_type_id ? Number(values.ticket_type_id) : null,
+    requester_id: values.requester_id ? Number(values.requester_id) : null,
   };
   if (values.priority !== originalPriority) {
     payload.resolution_due_at = computeResolutionDueAt(
       values.priority as TicketPriority
     );
+    if (policy) {
+      payload.sla_policy_id = policy.id;
+      payload.response_due_at = computeDueAt(policy.response_mins);
+      payload.resolution_due_at = computeDueAt(policy.resolve_mins);
+      payload.sla_breached = false;
+      payload.response_breached = false;
+      payload.resolution_breached = false;
+    }
   }
   return payload;
 }

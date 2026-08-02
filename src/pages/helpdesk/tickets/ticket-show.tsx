@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Send,
   Sparkles,
+  Star,
   XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -47,10 +48,13 @@ import {
   SLA_HOURS,
   type AgentRef,
   type HelpArticleRecord,
+  type MacroRecord,
+  type CsatRecord,
   type TicketMessageRecord,
   type TicketNoteRecord,
   type TicketRecord,
   type TicketStatus,
+  minutesBetween,
   translateTicketCategory,
   translateTicketSource,
 } from "../lib";
@@ -89,14 +93,21 @@ export function TicketShow() {
   } = useShow<TicketRecord>({
     resource: "desk_tickets",
     id,
-    meta: { appends: ["assignee"] },
+    meta: { appends: ["assignee", "queue", "ticket_type", "requester", "sla_policy", "csat_responses"] },
   });
   const update = useUpdate();
 
   const applyStatus = (to: TicketStatus) => {
     if (!record) return;
     const values: Record<string, unknown> = { status: to };
-    if (to === "resolved") values.resolved_at = new Date().toISOString();
+    if (to === "resolved") {
+      const resolvedAt = new Date().toISOString();
+      const resolutionBreached = Boolean(record.resolution_due_at && new Date(resolvedAt) > new Date(record.resolution_due_at));
+      values.resolved_at = resolvedAt;
+      values.resolution_mins = minutesBetween(record.createdAt, resolvedAt);
+      values.resolution_breached = resolutionBreached;
+      values.sla_breached = Boolean(record.response_breached || resolutionBreached);
+    }
     if ((to === "in_progress" || to === "open") && record.resolved_at) {
       values.resolved_at = null;
     }
@@ -198,6 +209,10 @@ export function TicketShow() {
 
             <Separator />
 
+            <TicketCsat record={record} />
+
+            <Separator />
+
             <TicketNotes ticketId={record.id} />
           </div>
         )}
@@ -246,6 +261,8 @@ function TicketShowBody({
               {record.category ? translateTicketCategory(translate, record.category) : "-"}
             </dd>
           </div>
+          <div className="space-y-1"><dt className="text-xs text-muted-foreground">{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</dt><dd className="text-sm font-medium">{record.queue?.name ?? "-"}</dd></div>
+          <div className="space-y-1"><dt className="text-xs text-muted-foreground">{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</dt><dd className="text-sm font-medium">{record.ticket_type?.name ?? "-"}</dd></div>
           <div className="space-y-1">
             <dt className="text-xs text-muted-foreground">{translate("tickets.fields.assignee", { ns: "starter" }, "Assignee")}</dt>
             <dd>
@@ -396,6 +413,7 @@ function TicketShowBody({
 function TicketConversation({ record }: { record: TicketRecord }) {
   const translate = useTranslate();
   const [reply, setReply] = useState("");
+  const [macroId, setMacroId] = useState("");
   const { data: identity } = useGetIdentity<AgentRef & { id: number }>();
   const { result: messagesResult, query: messagesQuery } = useList<TicketMessageRecord>({
     resource: "desk_ticket_messages",
@@ -429,6 +447,8 @@ function TicketConversation({ record }: { record: TicketRecord }) {
       type: "error",
     }),
   });
+  const updateTicket = useUpdate();
+  const { result: macrosResult } = useList<MacroRecord>({ resource: "desk_macros", pagination: { mode: "server", currentPage: 1, pageSize: 100 }, sorters: [{ field: "title", order: "asc" }] });
   const matchingArticles = articlesResult.data.filter(
     (article) => !record.category || article.category === record.category
   );
@@ -504,6 +524,11 @@ function TicketConversation({ record }: { record: TicketRecord }) {
       onSuccess: () => {
         setReply("");
         void messagesQuery.refetch();
+        if (!record.first_responded_at) {
+          const respondedAt = new Date().toISOString();
+          const breached = Boolean(record.response_due_at && new Date(respondedAt) > new Date(record.response_due_at));
+          updateTicket.mutate({ resource: "desk_tickets", id: record.id, values: { first_responded_at: respondedAt, response_breached: breached, sla_breached: Boolean(record.resolution_breached || breached) } });
+        }
       },
     });
   };
@@ -537,11 +562,26 @@ function TicketConversation({ record }: { record: TicketRecord }) {
       </ol>
       {matchingArticles.length ? <div className="rounded-xl border border-dashed bg-muted/35 p-3"><p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><Sparkles className="size-3.5 text-primary" /> {translate("tickets.conversation.aiGrounding", { ns: "starter", count: matchingArticles.length }, `AI will use ${matchingArticles.length} matching help ${matchingArticles.length === 1 ? "article" : "articles"} for a grounded draft.`)}</p></div> : null}
       <div className="space-y-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={macroId} onValueChange={(value) => setMacroId(value ?? "")}><SelectTrigger className="flex-1"><SelectValue placeholder={translate("tickets.macros.placeholder", { ns: "starter" }, "Choose a reply macro")}>{macrosResult.data.find((macro) => String(macro.id) === macroId)?.title ?? null}</SelectValue></SelectTrigger><SelectContent>{macrosResult.data.map((macro) => <SelectItem key={macro.id} value={String(macro.id)}>{macro.title}</SelectItem>)}</SelectContent></Select>
+          <Button type="button" variant="outline" disabled={!macroId} onClick={() => { const macro = macrosResult.data.find((item) => String(item.id) === macroId); if (macro) setReply((current) => current ? `${current}\n\n${macro.body}` : macro.body); }}>{translate("tickets.macros.insert", { ns: "starter" }, "Insert macro")}</Button>
+        </div>
         <Textarea value={reply} onChange={(event) => setReply(event.target.value)} placeholder={translate("tickets.conversation.replyPlaceholder", { ns: "starter" }, "Write a customer reply...")} className="min-h-28" />
         <div className="flex justify-end"><Button type="button" size="sm" disabled={!reply.trim() || createMessage.mutation.isPending} onClick={submitReply}><Send /> {translate("tickets.conversation.sendReply", { ns: "starter" }, "Send reply")}</Button></div>
       </div>
     </section>
   );
+}
+
+function TicketCsat({ record }: { record: TicketRecord }) {
+  const translate = useTranslate();
+  const [score, setScore] = useState(5);
+  const [comment, setComment] = useState("");
+  const { result, query } = useList<CsatRecord>({ resource: "desk_csat", filters: [{ field: "ticket_id", operator: "eq", value: record.id }], pagination: { mode: "server", currentPage: 1, pageSize: 10 } });
+  const create = useCreate<CsatRecord, HttpError>({ successNotification: () => ({ message: translate("tickets.csat.saved", { ns: "starter" }, "Customer satisfaction recorded"), type: "success" }) });
+  if (record.status !== "resolved" && record.status !== "closed") return <section className="rounded-xl border border-dashed bg-muted/20 p-4"><h3 className="text-sm font-medium">{translate("tickets.csat.title", { ns: "starter" }, "Customer satisfaction")}</h3><p className="mt-1 text-xs text-muted-foreground">{translate("tickets.csat.pending", { ns: "starter" }, "The survey becomes available after the ticket is resolved.")}</p></section>;
+  if (result.data[0]) return <section className="rounded-xl border bg-emerald-50/40 p-4 dark:bg-emerald-500/5"><div className="flex items-center justify-between"><h3 className="text-sm font-medium">{translate("tickets.csat.title", { ns: "starter" }, "Customer satisfaction")}</h3><span className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">{result.data[0].score}<Star className="size-4 fill-current" /></span></div><p className="mt-2 text-sm text-muted-foreground">{result.data[0].comment || translate("csat.noComment", { ns: "starter" }, "No comment provided.")}</p></section>;
+  return <section className="space-y-3 rounded-xl border bg-muted/20 p-4"><div><h3 className="text-sm font-medium">{translate("tickets.csat.collectTitle", { ns: "starter" }, "Record post-resolution CSAT")}</h3><p className="mt-1 text-xs text-muted-foreground">{translate("tickets.csat.collectDescription", { ns: "starter" }, "Capture the requester’s 1–5 rating and optional comment.")}</p></div><div className="flex gap-1">{[1, 2, 3, 4, 5].map((value) => <Button key={value} type="button" variant="ghost" size="icon-sm" aria-label={translate("tickets.csat.scoreLabel", { ns: "starter", score: value }, "Score {{score}}") } onClick={() => setScore(value)}><Star className={value <= score ? "fill-amber-400 text-amber-400" : "text-muted-foreground"} /></Button>)}</div><Textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder={translate("tickets.csat.commentPlaceholder", { ns: "starter" }, "Optional customer comment")} /><div className="flex justify-end"><Button type="button" size="sm" disabled={create.mutation.isPending || query.isLoading} onClick={() => create.mutate({ resource: "desk_csat", values: { ticket_id: record.id, score, comment: comment.trim() || null } }, { onSuccess: () => query.refetch() })}>{translate("tickets.csat.save", { ns: "starter" }, "Save CSAT")}</Button></div></section>;
 }
 
 function TicketNotes({ ticketId }: { ticketId: number }) {

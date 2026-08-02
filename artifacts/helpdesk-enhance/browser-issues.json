@@ -1,0 +1,233 @@
+[
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/dashboard"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/dashboard"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/dashboard"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/dashboard"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/queues"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/queues"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/sla"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/sla"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/csat"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/csat"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/requesters"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/requesters"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/requesters/378690478145536"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/requesters/378690478145536"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/help-library"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/help-library"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/performance"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/performance"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/reports"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/reports"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/queues"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/queues"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/sla"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/sla"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/csat"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/csat"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/requesters"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/requesters"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/requesters/378690478145536"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/requesters/378690478145536"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/help-library"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/help-library"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/performance"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/performance"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/reports"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/reports"
+  },
+  {
+    "type": "response",
+    "status": 404,
+    "text": "http://127.0.0.1:14308/api/mail:messageUnreadCount",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  },
+  {
+    "type": "console",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "url": "http://127.0.0.1:14308/x/desk/tickets/show/378691084222464"
+  }
+]

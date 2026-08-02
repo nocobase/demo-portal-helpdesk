@@ -23,6 +23,8 @@ import {
   SLA_HOURS,
   TICKET_PRIORITIES,
   type AgentRef,
+  type NamedRecord,
+  type RequesterRecord,
   translateTicketCategory,
   translateTicketPriority,
   translateTicketSource,
@@ -37,6 +39,9 @@ export type TicketFormValues = {
   requester_name: string;
   requester_email: string;
   assigneeId: string;
+  queue_id: string;
+  ticket_type_id: string;
+  requester_id: string;
 };
 
 export function TicketFormFields({
@@ -55,6 +60,9 @@ export function TicketFormFields({
     errorNotification: false,
     queryOptions: { retry: false },
   });
+  const { result: queuesResult } = useList<NamedRecord>({ resource: "desk_queues", pagination: { mode: "server", currentPage: 1, pageSize: 50 } });
+  const { result: typesResult } = useList<NamedRecord>({ resource: "desk_ticket_types", pagination: { mode: "server", currentPage: 1, pageSize: 50 } });
+  const { result: requestersResult } = useList<RequesterRecord>({ resource: "desk_requesters", pagination: { mode: "server", currentPage: 1, pageSize: 100 } });
   const slaHours =
     SLA_HOURS[watchedPriority as keyof typeof SLA_HOURS] ?? SLA_HOURS.medium;
   const selectedAssignee = agentsResult.data.find(
@@ -108,6 +116,13 @@ export function TicketFormFields({
           </FormItem>
         )}
       />
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <FormField control={form.control} name="queue_id" rules={{ required: translate("tickets.form.validation.queueRequired", { ns: "starter" }, "Queue is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.queuePlaceholder", { ns: "starter" }, "Select queue")}>{queuesResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{queuesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
+        <FormField control={form.control} name="ticket_type_id" rules={{ required: translate("tickets.form.validation.typeRequired", { ns: "starter" }, "Ticket type is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.typePlaceholder", { ns: "starter" }, "Select ticket type")}>{typesResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{typesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
+      </div>
+
+      <FormField control={form.control} name="requester_id" rules={{ required: translate("tickets.form.validation.requesterProfileRequired", { ns: "starter" }, "Requester profile is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.requesterProfile", { ns: "starter" }, "Requester profile")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => { field.onChange(value ?? ""); const requester = requestersResult.data.find((item) => String(item.id) === value); if (requester) { form.setValue("requester_name", requester.name, { shouldDirty: true }); form.setValue("requester_email", requester.email, { shouldDirty: true }); } }}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.requesterProfilePlaceholder", { ns: "starter" }, "Select requester")}>{requestersResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{requestersResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name} · {item.company}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
 
       <div className="grid gap-6 sm:grid-cols-2">
         <FormField
