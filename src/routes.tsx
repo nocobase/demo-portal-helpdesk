@@ -14,33 +14,7 @@ import {
   Wand2,
 } from "lucide-react";
 
-import { AccessDenied } from "@/components/access-control/access-denied";
-import { CanAccess } from "@/components/access-control/can-access";
-import { BoardPage } from "@/pages/helpdesk/board";
-import { DashboardPage } from "@/pages/helpdesk/dashboard";
-import { HelpArticlesPage } from "@/pages/helpdesk/help-articles";
-import { HelpArticleCreate, HelpArticleEdit } from "@/pages/helpdesk/help-article-form";
-import { MacrosPage } from "@/pages/helpdesk/macros";
-import { MacroCreate, MacroEdit } from "@/pages/helpdesk/macro-form";
-import { QueueCreate, QueueEdit } from "@/pages/helpdesk/queue-form";
-import { QueueShow } from "@/pages/helpdesk/queue-show";
-import { SlaPage } from "@/pages/helpdesk/sla";
-import { SlaPolicyCreate, SlaPolicyEdit } from "@/pages/helpdesk/sla-policy-form";
-import { SlaPolicyShow } from "@/pages/helpdesk/sla-policy-show";
-import { RequesterCreate, RequesterEdit } from "@/pages/helpdesk/requester-form";
-import { TicketCreate } from "@/pages/helpdesk/tickets/ticket-create";
-import { TicketEdit } from "@/pages/helpdesk/tickets/ticket-edit";
-import { TicketList } from "@/pages/helpdesk/tickets/ticket-list";
-import { TicketShow } from "@/pages/helpdesk/tickets/ticket-show";
-import { TicketTypeList } from "@/pages/helpdesk/ticket-types/ticket-type-list";
-import { TicketTypeCreate, TicketTypeEdit } from "@/pages/helpdesk/ticket-types/ticket-type-form";
-import { TicketTypeShow } from "@/pages/helpdesk/ticket-types/ticket-type-show";
-import { QueueWorkloadPage } from "@/pages/helpdesk/queue-workload";
-import { CsatPage } from "@/pages/helpdesk/csat";
-import { RequestersPage } from "@/pages/helpdesk/requesters";
-import { RequesterShow } from "@/pages/helpdesk/requester-show";
-import { AgentPerformancePage } from "@/pages/helpdesk/agent-performance";
-import { ReportsPage } from "@/pages/helpdesk/reports";
+import { withHelpdeskAccess } from "@/pages/helpdesk/routes/access-route";
 
 // Set this to false when the application no longer needs the example routes
 // contributed by installed Registry extensions. Providers, adapters, and the
@@ -50,37 +24,128 @@ export const registryRoutesEnabled = false;
 // Add application-owned business routes here. Installed Registry extensions
 // contribute their own route definitions through the same runtime. Add a
 // resource entry when a route should also appear in navigation.
-const ticketAccessDenied = <AccessDenied />;
+const ticketDetail = () =>
+  import("@/pages/helpdesk/routes/ticket-show-route");
+const ticketCreate = () =>
+  import("@/pages/helpdesk/routes/ticket-create-route");
+const ticketEdit = () =>
+  import("@/pages/helpdesk/routes/ticket-edit-route");
 
-const ticketDetail = () => (
-  <CanAccess
-    resource="desk_tickets"
-    action="show"
-    fallback={ticketAccessDenied}
-  >
-    <TicketShow />
-  </CanAccess>
+const queueCreate = withHelpdeskAccess(
+  () =>
+    import("@/pages/helpdesk/queue-form").then(({ QueueCreate }) => ({
+      default: QueueCreate,
+    })),
+  "desk_queues",
+  "create"
 );
+const queueEdit = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { QueueEdit } = await import("@/pages/helpdesk/queue-form");
+      return { default: () => <QueueEdit idParam={idParam} /> };
+    },
+    "desk_queues",
+    "edit"
+  );
+const queueShow = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { QueueShow } = await import("@/pages/helpdesk/queue-show");
+      return { default: () => <QueueShow idParam={idParam} /> };
+    },
+    "desk_queues",
+    "show"
+  );
 
-const ticketCreate = () => (
-  <CanAccess
-    resource="desk_tickets"
-    action="create"
-    fallback={ticketAccessDenied}
-  >
-    <TicketCreate />
-  </CanAccess>
+const ticketTypeCreate = withHelpdeskAccess(
+  () =>
+    import("@/pages/helpdesk/ticket-types/ticket-type-form").then(
+      ({ TicketTypeCreate }) => ({ default: TicketTypeCreate })
+    ),
+  "desk_ticket_types",
+  "create"
 );
+const ticketTypeEdit = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { TicketTypeEdit } = await import(
+        "@/pages/helpdesk/ticket-types/ticket-type-form"
+      );
+      return { default: () => <TicketTypeEdit idParam={idParam} /> };
+    },
+    "desk_ticket_types",
+    "edit"
+  );
+const ticketTypeShow = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { TicketTypeShow } = await import(
+        "@/pages/helpdesk/ticket-types/ticket-type-show"
+      );
+      return { default: () => <TicketTypeShow idParam={idParam} /> };
+    },
+    "desk_ticket_types",
+    "show"
+  );
 
-const ticketEdit = () => (
-  <CanAccess
-    resource="desk_tickets"
-    action="edit"
-    fallback={ticketAccessDenied}
-  >
-    <TicketEdit />
-  </CanAccess>
+const requesterCreate = withHelpdeskAccess(
+  () =>
+    import("@/pages/helpdesk/requester-form").then(({ RequesterCreate }) => ({
+      default: RequesterCreate,
+    })),
+  "desk_requesters",
+  "create"
 );
+const requesterEdit = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { RequesterEdit } = await import("@/pages/helpdesk/requester-form");
+      return { default: () => <RequesterEdit idParam={idParam} /> };
+    },
+    "desk_requesters",
+    "edit"
+  );
+const requesterShow = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { RequesterShow } = await import("@/pages/helpdesk/requester-show");
+      return { default: () => <RequesterShow idParam={idParam} /> };
+    },
+    "desk_requesters",
+    "show"
+  );
+
+const slaPolicyCreate = withHelpdeskAccess(
+  () =>
+    import("@/pages/helpdesk/sla-policy-form").then(({ SlaPolicyCreate }) => ({
+      default: SlaPolicyCreate,
+    })),
+  "desk_sla_policies",
+  "create"
+);
+const slaPolicyEdit = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { SlaPolicyEdit } = await import(
+        "@/pages/helpdesk/sla-policy-form"
+      );
+      return { default: () => <SlaPolicyEdit idParam={idParam} /> };
+    },
+    "desk_sla_policies",
+    "edit"
+  );
+const slaPolicyShow = (idParam = "id") =>
+  withHelpdeskAccess(
+    async () => {
+      const { SlaPolicyShow } = await import(
+        "@/pages/helpdesk/sla-policy-show"
+      );
+      return { default: () => <SlaPolicyShow idParam={idParam} /> };
+    },
+    "desk_sla_policies",
+    "show"
+  );
 
 // Cross-entity popups one level deeper than the ticket detail drawer: from
 // `/tickets/show/:id`, clicking the linked queue, ticket type, requester, or
@@ -90,53 +155,53 @@ const ticketShowChildren = [
   {
     name: "desk_tickets.show.edit",
     path: "edit",
-    element: ticketEdit(),
+    lazy: ticketEdit,
   },
   {
     name: "desk_tickets.show.queue",
     path: "queue/show/:queueId",
-    element: <QueueShow idParam="queueId" />,
+    lazy: queueShow("queueId"),
     children: [
       {
         name: "desk_tickets.show.queue.edit",
         path: "edit",
-        element: <QueueEdit idParam="queueId" />,
+        lazy: queueEdit("queueId"),
       },
     ],
   },
   {
     name: "desk_tickets.show.ticketType",
     path: "ticket-type/show/:typeId",
-    element: <TicketTypeShow idParam="typeId" />,
+    lazy: ticketTypeShow("typeId"),
     children: [
       {
         name: "desk_tickets.show.ticketType.edit",
         path: "edit",
-        element: <TicketTypeEdit idParam="typeId" />,
+        lazy: ticketTypeEdit("typeId"),
       },
     ],
   },
   {
     name: "desk_tickets.show.requester",
     path: "requester/show/:requesterId",
-    element: <RequesterShow idParam="requesterId" />,
+    lazy: requesterShow("requesterId"),
     children: [
       {
         name: "desk_tickets.show.requester.edit",
         path: "edit",
-        element: <RequesterEdit idParam="requesterId" />,
+        lazy: requesterEdit("requesterId"),
       },
     ],
   },
   {
     name: "desk_tickets.show.slaPolicy",
     path: "sla-policy/show/:policyId",
-    element: <SlaPolicyShow idParam="policyId" />,
+    lazy: slaPolicyShow("policyId"),
     children: [
       {
         name: "desk_tickets.show.slaPolicy.edit",
         path: "edit",
-        element: <SlaPolicyEdit idParam="policyId" />,
+        lazy: slaPolicyEdit("policyId"),
       },
     ],
   },
@@ -146,7 +211,7 @@ const queueShowChildren = [
   {
     name: "desk_queues.show.edit",
     path: "edit",
-    element: <QueueEdit />,
+    lazy: queueEdit(),
   },
 ];
 
@@ -154,7 +219,7 @@ const ticketTypeShowChildren = [
   {
     name: "desk_ticket_types.show.edit",
     path: "edit",
-    element: <TicketTypeEdit />,
+    lazy: ticketTypeEdit(),
   },
 ];
 
@@ -162,7 +227,7 @@ const slaPolicyShowChildren = [
   {
     name: "sla.policy.show.edit",
     path: "edit",
-    element: <SlaPolicyEdit />,
+    lazy: slaPolicyEdit(),
   },
 ];
 
@@ -170,7 +235,19 @@ const requesterShowChildren = [
   {
     name: "desk_requesters.show.edit",
     path: "edit",
-    element: <RequesterEdit />,
+    lazy: requesterEdit(),
+  },
+  {
+    name: "desk_requesters.ticket",
+    path: "tickets/:id",
+    lazy: ticketDetail,
+    children: [
+      {
+        name: "desk_requesters.ticket.edit",
+        path: "edit",
+        lazy: ticketEdit,
+      },
+    ],
   },
 ];
 
@@ -178,7 +255,10 @@ export const appRoutes = defineAppRoutes([
   {
     name: "dashboard",
     path: "/dashboard",
-    element: <DashboardPage />,
+    lazy: () =>
+      import("@/pages/helpdesk/dashboard").then((module) => ({
+        default: module.DashboardPage,
+      })),
     resource: {
       meta: {
         label: "Dashboard",
@@ -192,12 +272,12 @@ export const appRoutes = defineAppRoutes([
       {
         name: "dashboard.ticket",
         path: "tickets/:id",
-        element: ticketDetail(),
+        lazy: ticketDetail,
         children: [
           {
             name: "dashboard.ticket.edit",
             path: "edit",
-            element: ticketEdit(),
+            lazy: ticketEdit,
           },
         ],
       },
@@ -206,15 +286,7 @@ export const appRoutes = defineAppRoutes([
   {
     name: "desk_tickets",
     path: "/tickets",
-    element: (
-      <CanAccess
-        resource="desk_tickets"
-        action="list"
-        fallback={ticketAccessDenied}
-      >
-        <TicketList />
-      </CanAccess>
-    ),
+    lazy: () => import("@/pages/helpdesk/routes/ticket-list-route"),
     resource: {
       meta: {
         label: "Tickets",
@@ -237,19 +309,19 @@ export const appRoutes = defineAppRoutes([
         name: "desk_tickets.create",
         path: "create",
         resourceAction: "create",
-        element: ticketCreate(),
+        lazy: ticketCreate,
       },
       {
         name: "desk_tickets.edit",
         path: "edit/:id",
         resourceAction: "edit",
-        element: ticketEdit(),
+        lazy: ticketEdit,
       },
       {
         name: "desk_tickets.show",
         path: "show/:id",
         resourceAction: "show",
-        element: ticketDetail(),
+        lazy: ticketDetail,
         children: ticketShowChildren,
       },
     ],
@@ -257,7 +329,10 @@ export const appRoutes = defineAppRoutes([
   {
     name: "board",
     path: "/board",
-    element: <BoardPage />,
+    lazy: () =>
+      import("@/pages/helpdesk/board").then((module) => ({
+        default: module.BoardPage,
+      })),
     resource: {
       meta: {
         label: "Board",
@@ -271,17 +346,17 @@ export const appRoutes = defineAppRoutes([
       {
         name: "board.create",
         path: "create",
-        element: ticketCreate(),
+        lazy: ticketCreate,
       },
       {
         name: "board.ticket",
         path: ":id",
-        element: ticketDetail(),
+        lazy: ticketDetail,
         children: [
           {
             name: "board.ticket.edit",
             path: "edit",
-            element: ticketEdit(),
+            lazy: ticketEdit,
           },
         ],
       },
@@ -290,7 +365,10 @@ export const appRoutes = defineAppRoutes([
   {
     name: "sla",
     path: "/sla",
-    element: <SlaPage />,
+    lazy: () =>
+      import("@/pages/helpdesk/sla").then((module) => ({
+        default: module.SlaPage,
+      })),
     resource: {
       meta: {
         label: "SLA",
@@ -304,29 +382,29 @@ export const appRoutes = defineAppRoutes([
       {
         name: "sla.ticket",
         path: ":id",
-        element: ticketDetail(),
+        lazy: ticketDetail,
         children: [
           {
             name: "sla.ticket.edit",
             path: "edit",
-            element: ticketEdit(),
+            lazy: ticketEdit,
           },
         ],
       },
       {
         name: "sla.policy.create",
         path: "policy/create",
-        element: <SlaPolicyCreate />,
+        lazy: slaPolicyCreate,
       },
       {
         name: "sla.policy.edit",
         path: "policy/edit/:id",
-        element: <SlaPolicyEdit />,
+        lazy: slaPolicyEdit(),
       },
       {
         name: "sla.policy.show",
         path: "policy/show/:id",
-        element: <SlaPolicyShow />,
+        lazy: slaPolicyShow(),
         children: slaPolicyShowChildren,
       },
     ],
@@ -334,7 +412,10 @@ export const appRoutes = defineAppRoutes([
   {
     name: "desk_help_articles",
     path: "/help-library",
-    element: <HelpArticlesPage />,
+    lazy: () =>
+      import("@/pages/helpdesk/help-articles").then((module) => ({
+        default: module.HelpArticlesPage,
+      })),
     resource: {
       meta: {
         label: "Help library",
@@ -352,75 +433,147 @@ export const appRoutes = defineAppRoutes([
       {
         name: "desk_help_articles.create",
         path: "create",
-        element: <HelpArticleCreate />,
+        lazy: withHelpdeskAccess(
+          () =>
+            import("@/pages/helpdesk/help-article-form").then(
+              ({ HelpArticleCreate }) => ({ default: HelpArticleCreate })
+            ),
+          "desk_help_articles",
+          "create"
+        ),
       },
       {
         name: "desk_help_articles.edit",
         path: "edit/:id",
-        element: <HelpArticleEdit />,
+        lazy: withHelpdeskAccess(
+          () =>
+            import("@/pages/helpdesk/help-article-form").then(
+              ({ HelpArticleEdit }) => ({ default: HelpArticleEdit })
+            ),
+          "desk_help_articles",
+          "edit"
+        ),
       },
     ],
   },
   {
     name: "desk_queues",
     path: "/queues",
-    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><QueueWorkloadPage /></CanAccess>,
+    lazy: () => import("@/pages/helpdesk/routes/queue-workload-route"),
     resource: { meta: { label: "Queue workload", i18nKey: "queues.title", i18nOptions: { ns: "starter" }, priority: 4, icon: <Layers3 />, acl: { type: "collection" } } },
     children: [
-      { name: "desk_queues.ticket", path: ":id", element: ticketDetail(), children: [{ name: "desk_queues.ticket.edit", path: "edit", element: ticketEdit() }] },
-      { name: "desk_queues.create", path: "create", element: <QueueCreate /> },
-      { name: "desk_queues.edit", path: "edit/:id", element: <QueueEdit /> },
-      { name: "desk_queues.show", path: "show/:id", element: <QueueShow />, children: queueShowChildren },
+      {
+        name: "desk_queues.ticket",
+        path: ":id",
+        lazy: ticketDetail,
+        children: [
+          { name: "desk_queues.ticket.edit", path: "edit", lazy: ticketEdit },
+        ],
+      },
+      { name: "desk_queues.create", path: "create", lazy: queueCreate },
+      { name: "desk_queues.edit", path: "edit/:id", lazy: queueEdit() },
+      {
+        name: "desk_queues.show",
+        path: "show/:id",
+        lazy: queueShow(),
+        children: queueShowChildren,
+      },
     ],
   },
   {
     name: "desk_ticket_types",
     path: "/ticket-types",
-    element: <CanAccess resource="desk_ticket_types" action="list" fallback={ticketAccessDenied}><TicketTypeList /></CanAccess>,
+    lazy: withHelpdeskAccess(
+      () =>
+        import("@/pages/helpdesk/ticket-types/ticket-type-list").then(
+          ({ TicketTypeList }) => ({ default: TicketTypeList })
+        ),
+      "desk_ticket_types",
+      "list"
+    ),
     resource: { meta: { label: "Ticket types", i18nKey: "ticketTypes.title", i18nOptions: { ns: "starter" }, priority: 6, icon: <Tag />, description: "The categories of work customer requests are classified under.", descriptionI18nKey: "ticketTypes.description", acl: { type: "collection" } } },
     children: [
-      { name: "desk_ticket_types.create", path: "create", element: <TicketTypeCreate /> },
-      { name: "desk_ticket_types.edit", path: "edit/:id", element: <TicketTypeEdit /> },
-      { name: "desk_ticket_types.show", path: "show/:id", element: <TicketTypeShow />, children: ticketTypeShowChildren },
+      { name: "desk_ticket_types.create", path: "create", lazy: ticketTypeCreate },
+      { name: "desk_ticket_types.edit", path: "edit/:id", lazy: ticketTypeEdit() },
+      {
+        name: "desk_ticket_types.show",
+        path: "show/:id",
+        lazy: ticketTypeShow(),
+        children: ticketTypeShowChildren,
+      },
     ],
   },
   {
     name: "desk_macros",
     path: "/macros",
-    element: <CanAccess resource="desk_macros" action="list" fallback={ticketAccessDenied}><MacrosPage /></CanAccess>,
+    lazy: withHelpdeskAccess(
+      () =>
+        import("@/pages/helpdesk/macros").then(({ MacrosPage }) => ({
+          default: MacrosPage,
+        })),
+      "desk_macros",
+      "list"
+    ),
     resource: { meta: { label: "Macros", i18nKey: "macros.title", i18nOptions: { ns: "starter" }, priority: 11, icon: <Wand2 />, description: "Reusable reply snippets agents can insert into ticket conversations.", descriptionI18nKey: "macros.description", acl: { type: "collection" } } },
     children: [
-      { name: "desk_macros.create", path: "create", element: <MacroCreate /> },
-      { name: "desk_macros.edit", path: "edit/:id", element: <MacroEdit /> },
+      {
+        name: "desk_macros.create",
+        path: "create",
+        lazy: withHelpdeskAccess(
+          () =>
+            import("@/pages/helpdesk/macro-form").then(({ MacroCreate }) => ({
+              default: MacroCreate,
+            })),
+          "desk_macros",
+          "create"
+        ),
+      },
+      {
+        name: "desk_macros.edit",
+        path: "edit/:id",
+        lazy: withHelpdeskAccess(
+          () =>
+            import("@/pages/helpdesk/macro-form").then(({ MacroEdit }) => ({
+              default: MacroEdit,
+            })),
+          "desk_macros",
+          "edit"
+        ),
+      },
     ],
   },
   {
     name: "desk_requesters",
     path: "/requesters",
-    element: <CanAccess resource="desk_requesters" action="list" fallback={ticketAccessDenied}><RequestersPage /></CanAccess>,
+    lazy: () => import("@/pages/helpdesk/routes/requesters-route"),
     resource: { meta: { label: "Requesters", i18nKey: "requesters.title", i18nOptions: { ns: "starter" }, priority: 8, icon: <UsersRound />, acl: { type: "collection" } } },
     children: [
-      { name: "desk_requesters.create", path: "create", element: <RequesterCreate /> },
-      { name: "desk_requesters.edit", path: "edit/:id", element: <RequesterEdit /> },
-      { name: "desk_requesters.show", path: ":id", element: <RequesterShow />, children: requesterShowChildren },
+      { name: "desk_requesters.create", path: "create", lazy: requesterCreate },
+      { name: "desk_requesters.edit", path: "edit/:id", lazy: requesterEdit() },
+      {
+        name: "desk_requesters.show",
+        path: ":id",
+        lazy: requesterShow(),
+        children: requesterShowChildren,
+      },
     ],
   },
   {
     name: "desk_csat",
     path: "/csat",
-    element: <CanAccess resource="desk_csat" action="list" fallback={ticketAccessDenied}><CsatPage /></CanAccess>,
+    lazy: () => import("@/pages/helpdesk/routes/csat-route"),
     resource: { meta: { label: "Customer satisfaction", i18nKey: "csat.title", i18nOptions: { ns: "starter" }, priority: 9, icon: <Smile />, acl: { type: "collection" } } },
   },
   {
     name: "agent-performance",
     path: "/performance",
-    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><AgentPerformancePage /></CanAccess>,
+    lazy: () => import("@/pages/helpdesk/routes/agent-performance-route"),
     resource: { meta: { label: "Agent performance", i18nKey: "performance.title", i18nOptions: { ns: "starter" }, priority: 10, icon: <Gauge /> } },
   },
   {
     name: "reports",
     path: "/reports",
-    element: <CanAccess resource="desk_tickets" action="list" fallback={ticketAccessDenied}><ReportsPage /></CanAccess>,
+    lazy: () => import("@/pages/helpdesk/routes/reports-route"),
     resource: { meta: { label: "Reports", i18nKey: "reports.title", i18nOptions: { ns: "starter" }, priority: 12, icon: <BarChart3 /> } },
   },
 ]);
