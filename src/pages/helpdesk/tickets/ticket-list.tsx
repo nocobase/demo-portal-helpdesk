@@ -15,18 +15,13 @@ import { EditButton } from "@/components/resources/buttons/edit";
 import { ShowButton } from "@/components/resources/buttons/show";
 import { ListView } from "@/components/resources/views/list-view";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CategoryBadge, PriorityBadge, SlaBadge, TicketStatusBadge } from "../badges";
+import { PriorityBadge, TicketStatusBadge } from "../badges";
 import {
   agentDisplayName,
-  TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES,
-  formatRelativeDeadline,
-  getSlaState,
-  getTicketDueAt,
   type AgentRef,
   type TicketRecord,
-  translateTicketCategory,
   translateTicketPriority,
   translateTicketStatus,
 } from "../lib";
@@ -140,11 +135,12 @@ export function TicketList() {
           </TicketColumnHeader>
         ),
         enableSorting: false,
+        size: 460,
         cell: ({ row }) => (
           <button
             type="button"
             onClick={() => openTicket(row.original.id)}
-            className="max-w-72 truncate text-left font-medium hover:underline"
+            className="block w-full truncate text-left font-medium hover:underline"
             title={row.original.subject}
           >
             {row.original.subject}
@@ -170,6 +166,7 @@ export function TicketList() {
           </TicketColumnHeader>
         ),
         enableSorting: false,
+        size: 124,
         cell: ({ getValue }) => <TicketStatusBadge status={getValue()} />,
       }),
       columnHelper.accessor("priority", {
@@ -191,38 +188,9 @@ export function TicketList() {
           </TicketColumnHeader>
         ),
         enableSorting: false,
+        size: 116,
         cell: ({ getValue }) => <PriorityBadge priority={getValue()} />,
       }),
-      columnHelper.accessor("category", {
-        id: "category",
-        header: ({ column, table }) => (
-          <TicketColumnHeader column={column} label={translate("tickets.fields.category", { ns: "starter" }, "Category")} sortable={false}>
-            <DataTableFilterCombobox
-              column={column}
-              table={table}
-              options={TICKET_CATEGORIES.map((category) => ({
-                value: category,
-                label: translateTicketCategory(translate, category),
-              }))}
-              defaultOperator="in"
-              operators={["in", "nin"]}
-              placeholder={translate("tickets.filters.category", { ns: "starter" }, "Filter by category")}
-              multiple
-            />
-          </TicketColumnHeader>
-        ),
-        enableSorting: false,
-        cell: ({ getValue }) => <CategoryBadge category={getValue()} />,
-      }),
-      columnHelper.accessor("requester_name", {
-        id: "requester_name",
-        header: ({ column }) => (
-          <TicketColumnHeader column={column} label={translate("tickets.fields.requester", { ns: "starter" }, "Requester")} sortable={false} />
-        ),
-        enableSorting: false,
-        cell: ({ getValue }) => getValue() || "-",
-      }),
-      columnHelper.display({ id: "routing", header: translate("tickets.fields.routing", { ns: "starter" }, "Routing"), enableSorting: false, cell: ({ row }) => <div className="min-w-32"><p className="text-sm font-medium">{row.original.queue?.name ?? "-"}</p><p className="text-xs text-muted-foreground">{row.original.ticket_type?.name ?? "-"}</p></div> }),
       columnHelper.accessor((record) => record.assigneeId, {
         id: "assignee.id",
         header: ({ column, table }) => (
@@ -239,47 +207,31 @@ export function TicketList() {
           </TicketColumnHeader>
         ),
         enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <AgentAvatar agent={row.original.assignee} className="size-6" />
-            <span className="text-muted-foreground">
-              {agentDisplayName(
-                row.original.assignee,
-                translate(
-                  "tickets.assignee.unassigned",
-                  { ns: "starter" },
-                  "Unassigned"
-                )
-              )}
-            </span>
-          </div>
-        ),
-      }),
-      columnHelper.display({
-        id: "sla",
-        header: translate("tickets.fields.sla", { ns: "starter" }, "SLA"),
+        size: 168,
         cell: ({ row }) => {
-          const due = getTicketDueAt(row.original);
-          const state = getSlaState(row.original);
+          const name = agentDisplayName(
+            row.original.assignee,
+            translate(
+              "tickets.assignee.unassigned",
+              { ns: "starter" },
+              "Unassigned"
+            )
+          );
           return (
-            <SlaBadge
-              state={state}
-              detail={
-                due && state !== "on_track"
-                  ? formatRelativeDeadline(due, translate)
-                  : undefined
-              }
-            />
+            <div className="flex items-center gap-2" title={name}>
+              <AgentAvatar agent={row.original.assignee} className="size-6 shrink-0" />
+              <span className="truncate text-muted-foreground">{name}</span>
+            </div>
           );
         },
-        enableSorting: false,
       }),
-      columnHelper.accessor("createdAt", {
-        id: "createdAt",
+      columnHelper.accessor("updatedAt", {
+        id: "updatedAt",
         header: ({ column }) => (
-          <TicketColumnHeader column={column} label={translate("tickets.fields.created", { ns: "starter" }, "Created")} />
+          <TicketColumnHeader column={column} label={translate("tickets.fields.updated", { ns: "starter" }, "Updated")} />
         ),
         enableSorting: true,
+        size: 124,
         cell: ({ getValue }) =>
           getValue()
             ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
@@ -328,7 +280,7 @@ export function TicketList() {
           </div>
         ),
         enableSorting: false,
-        size: 144,
+        size: 120,
       }),
     ];
   }, [agentOptions, editTicket, locale, openTicket, translate]);
@@ -341,8 +293,13 @@ export function TicketList() {
       meta: {
         appends: ["assignee", "queue", "ticket_type", "requester", "sla_policy"],
       },
+      pagination: {
+        mode: "server",
+        currentPage: 1,
+        pageSize: 20,
+      },
       sorters: {
-        initial: [{ field: "createdAt", order: "desc" }],
+        initial: [{ field: "updatedAt", order: "desc" }],
       },
     },
   });

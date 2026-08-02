@@ -25,6 +25,7 @@ import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { LogOutIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/app-shell/brand";
+import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { extensionUserMenuItems } from "@/app/extensions";
 
 const pluginSettingsResource = {
@@ -74,6 +75,7 @@ function DesktopHeader() {
       </div>
       <div className="flex items-center gap-2">
         <SettingsLink />
+        <LanguageToggle />
         <ThemeToggle />
         <UserDropdown />
       </div>
@@ -112,6 +114,7 @@ function MobileHeader() {
       <Brand logoClassName="h-6" />
       <div className="flex shrink-0 items-center gap-1">
         <SettingsLink className="size-9" />
+        <LanguageToggle className="size-9" />
         <ThemeToggle className="size-9" />
         <UserDropdown />
       </div>

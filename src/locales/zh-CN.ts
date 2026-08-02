@@ -139,6 +139,7 @@ export const starter = {
   "tickets.fields.sla": "SLA",
   "tickets.fields.slaStatus": "SLA 状态",
   "tickets.fields.created": "创建时间",
+  "tickets.fields.updated": "更新时间",
   "tickets.fields.resolutionDue": "解决期限",
   "tickets.fields.resolved": "解决时间",
   "tickets.fields.actions": "操作",

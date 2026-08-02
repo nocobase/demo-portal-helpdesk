@@ -142,6 +142,7 @@ export const starter = {
   "tickets.fields.sla": "SLA",
   "tickets.fields.slaStatus": "SLA status",
   "tickets.fields.created": "Created",
+  "tickets.fields.updated": "Updated",
   "tickets.fields.resolutionDue": "Resolution due",
   "tickets.fields.resolved": "Resolved",
   "tickets.fields.actions": "Actions",
