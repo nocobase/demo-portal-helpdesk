@@ -40,8 +40,27 @@ function TicketTypeFields({ form }: { form: UseFormReturn<TicketTypeFormValues> 
 export function TicketTypeCreate() {
   const translate = useTranslate();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("ticketTypes.actions.new", { ns: "starter" }, "New ticket type")}
+        description={translate("ticketTypes.form.createDescription", { ns: "starter" }, "Add a category tickets can be classified under.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <TicketTypeCreateForm />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function TicketTypeCreateForm() {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish }, ...form } = useForm<NamedRecord, HttpError, TicketTypeFormValues>({
     refineCoreProps: {
       resource: "desk_ticket_types",
@@ -53,28 +72,17 @@ export function TicketTypeCreate() {
   });
 
   return (
-    <>
-      <RouteDrawer
-        title={translate("ticketTypes.actions.new", { ns: "starter" }, "New ticket type")}
-        description={translate("ticketTypes.form.createDescription", { ns: "starter" }, "Add a category tickets can be classified under.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
-              <TicketTypeFields form={form} />
-            </div>
-            <RouteDrawerFooter className="flex-row justify-end">
-              <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>{translate("ticketTypes.actions.create", { ns: "starter" }, "Create ticket type")}</Button>
-            </RouteDrawerFooter>
-          </form>
-        </Form>
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
+          <TicketTypeFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("ticketTypes.actions.create", { ns: "starter" }, "Create ticket type")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }
 
@@ -83,8 +91,27 @@ export function TicketTypeEdit({ idParam = "id" }: { idParam?: string }) {
   const params = useParams();
   const typeId = params[idParam];
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("ticketTypes.actions.edit", { ns: "starter" }, "Edit ticket type")}
+        description={translate("ticketTypes.form.editDescription", { ns: "starter" }, "Rename this ticket type. Existing ticket classification is unaffected.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <TicketTypeEditForm typeId={typeId} />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function TicketTypeEditForm({ typeId }: { typeId?: string }) {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish, query }, ...form } = useForm<NamedRecord, HttpError, TicketTypeFormValues>({
     refineCoreProps: {
       resource: "desk_ticket_types",
@@ -103,32 +130,21 @@ export function TicketTypeEdit({ idParam = "id" }: { idParam?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record]);
 
+  if (query?.isLoading) {
+    return <LoadingState className="min-h-64" />;
+  }
+
   return (
-    <>
-      <RouteDrawer
-        title={translate("ticketTypes.actions.edit", { ns: "starter" }, "Edit ticket type")}
-        description={translate("ticketTypes.form.editDescription", { ns: "starter" }, "Rename this ticket type. Existing ticket classification is unaffected.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        {query?.isLoading ? (
-          <LoadingState className="min-h-64" />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
-                <TicketTypeFields form={form} />
-              </div>
-              <RouteDrawerFooter className="flex-row justify-end">
-                <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
-              </RouteDrawerFooter>
-            </form>
-          </Form>
-        )}
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
+          <TicketTypeFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }

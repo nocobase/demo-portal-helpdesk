@@ -84,8 +84,27 @@ function MacroFields({ form }: { form: UseFormReturn<MacroFormValues> }) {
 export function MacroCreate() {
   const translate = useTranslate();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("macros.actions.new", { ns: "starter" }, "New macro")}
+        description={translate("macros.form.createDescription", { ns: "starter" }, "Add a reusable reply agents can insert while working a ticket.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <MacroCreateForm />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function MacroCreateForm() {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish }, ...form } = useForm<MacroRecord, HttpError, MacroFormValues>({
     refineCoreProps: {
       resource: "desk_macros",
@@ -97,28 +116,17 @@ export function MacroCreate() {
   });
 
   return (
-    <>
-      <RouteDrawer
-        title={translate("macros.actions.new", { ns: "starter" }, "New macro")}
-        description={translate("macros.form.createDescription", { ns: "starter" }, "Add a reusable reply agents can insert while working a ticket.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
-              <MacroFields form={form} />
-            </div>
-            <RouteDrawerFooter className="flex-row justify-end">
-              <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>{translate("macros.actions.create", { ns: "starter" }, "Create macro")}</Button>
-            </RouteDrawerFooter>
-          </form>
-        </Form>
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
+          <MacroFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("macros.actions.create", { ns: "starter" }, "Create macro")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }
 
@@ -126,13 +134,32 @@ export function MacroEdit() {
   const translate = useTranslate();
   const { id } = useParams<{ id: string }>();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("macros.actions.edit", { ns: "starter" }, "Edit macro")}
+        description={translate("macros.form.editDescription", { ns: "starter" }, "Update this reply snippet.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <MacroEditForm macroId={id} />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function MacroEditForm({ macroId }: { macroId?: string }) {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish, query }, ...form } = useForm<MacroRecord, HttpError, MacroFormValues>({
     refineCoreProps: {
       resource: "desk_macros",
       action: "edit",
-      id,
+      id: macroId,
       redirect: false,
       onMutationSuccess: () => close({ skipBeforeClose: true }),
     },
@@ -146,32 +173,21 @@ export function MacroEdit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record]);
 
+  if (query?.isLoading) {
+    return <LoadingState className="min-h-64" />;
+  }
+
   return (
-    <>
-      <RouteDrawer
-        title={translate("macros.actions.edit", { ns: "starter" }, "Edit macro")}
-        description={translate("macros.form.editDescription", { ns: "starter" }, "Update this reply snippet.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        {query?.isLoading ? (
-          <LoadingState className="min-h-64" />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
-                <MacroFields form={form} />
-              </div>
-              <RouteDrawerFooter className="flex-row justify-end">
-                <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
-              </RouteDrawerFooter>
-            </form>
-          </Form>
-        )}
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
+          <MacroFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }

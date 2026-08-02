@@ -151,8 +151,27 @@ const toPayload = (values: HelpArticleFormValues) => ({
 export function HelpArticleCreate() {
   const translate = useTranslate();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("helpLibrary.actions.new", { ns: "starter" }, "New article")}
+        description={translate("helpLibrary.form.createDescription", { ns: "starter" }, "Publish reusable support guidance for the team.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <HelpArticleCreateForm />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function HelpArticleCreateForm() {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish }, ...form } = useForm<HelpArticleRecord, HttpError, HelpArticleFormValues>({
     refineCoreProps: {
       resource: "desk_help_articles",
@@ -164,28 +183,17 @@ export function HelpArticleCreate() {
   });
 
   return (
-    <>
-      <RouteDrawer
-        title={translate("helpLibrary.actions.new", { ns: "starter" }, "New article")}
-        description={translate("helpLibrary.form.createDescription", { ns: "starter" }, "Publish reusable support guidance for the team.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => onFinish(toPayload(values) as unknown as HelpArticleFormValues))} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
-              <HelpArticleFields form={form} />
-            </div>
-            <RouteDrawerFooter className="flex-row justify-end">
-              <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>{translate("helpLibrary.actions.create", { ns: "starter" }, "Create article")}</Button>
-            </RouteDrawerFooter>
-          </form>
-        </Form>
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(toPayload(values) as unknown as HelpArticleFormValues))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
+          <HelpArticleFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("helpLibrary.actions.create", { ns: "starter" }, "Create article")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }
 
@@ -193,13 +201,32 @@ export function HelpArticleEdit() {
   const translate = useTranslate();
   const { id } = useParams<{ id: string }>();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("helpLibrary.actions.edit", { ns: "starter" }, "Edit article")}
+        description={translate("helpLibrary.form.editDescription", { ns: "starter" }, "Update this support guidance article.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <HelpArticleEditForm articleId={id} />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function HelpArticleEditForm({ articleId }: { articleId?: string }) {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish, query }, ...form } = useForm<HelpArticleRecord, HttpError, HelpArticleFormValues>({
     refineCoreProps: {
       resource: "desk_help_articles",
       action: "edit",
-      id,
+      id: articleId,
       redirect: false,
       onMutationSuccess: () => close({ skipBeforeClose: true }),
     },
@@ -220,32 +247,21 @@ export function HelpArticleEdit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record]);
 
+  if (query?.isLoading) {
+    return <LoadingState className="min-h-64" />;
+  }
+
   return (
-    <>
-      <RouteDrawer
-        title={translate("helpLibrary.actions.edit", { ns: "starter" }, "Edit article")}
-        description={translate("helpLibrary.form.editDescription", { ns: "starter" }, "Update this support guidance article.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        {query?.isLoading ? (
-          <LoadingState className="min-h-64" />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((values) => onFinish(toPayload(values) as unknown as HelpArticleFormValues))} className="flex min-h-0 flex-1 flex-col">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
-                <HelpArticleFields form={form} />
-              </div>
-              <RouteDrawerFooter className="flex-row justify-end">
-                <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
-              </RouteDrawerFooter>
-            </form>
-          </Form>
-        )}
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(toPayload(values) as unknown as HelpArticleFormValues))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
+          <HelpArticleFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }

@@ -66,8 +66,27 @@ function RequesterFields({ form }: { form: UseFormReturn<RequesterFormValues> })
 export function RequesterCreate() {
   const translate = useTranslate();
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("requesters.actions.new", { ns: "starter" }, "New requester")}
+        description={translate("requesters.form.createDescription", { ns: "starter" }, "Add a customer profile that tickets can be linked to.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <RequesterCreateForm />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function RequesterCreateForm() {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish }, ...form } = useForm<RequesterRecord, HttpError, RequesterFormValues>({
     refineCoreProps: {
       resource: "desk_requesters",
@@ -79,28 +98,17 @@ export function RequesterCreate() {
   });
 
   return (
-    <>
-      <RouteDrawer
-        title={translate("requesters.actions.new", { ns: "starter" }, "New requester")}
-        description={translate("requesters.form.createDescription", { ns: "starter" }, "Add a customer profile that tickets can be linked to.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
-              <RequesterFields form={form} />
-            </div>
-            <RouteDrawerFooter className="flex-row justify-end">
-              <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>{translate("requesters.actions.create", { ns: "starter" }, "Create requester")}</Button>
-            </RouteDrawerFooter>
-          </form>
-        </Form>
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
+          <RequesterFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("requesters.actions.create", { ns: "starter" }, "Create requester")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }
 
@@ -109,8 +117,27 @@ export function RequesterEdit({ idParam = "id" }: { idParam?: string }) {
   const params = useParams();
   const requesterId = params[idParam];
   const closeTo = useContextualCloseTo();
-  const close = useRouteSurfaceClose();
   const { beforeClose, confirmation } = useRefineUnsavedChangesGuard();
+
+  return (
+    <>
+      <RouteDrawer
+        title={translate("requesters.actions.edit", { ns: "starter" }, "Edit requester")}
+        description={translate("requesters.form.editDescription", { ns: "starter" }, "Update this customer's profile details.")}
+        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
+        closeTo={closeTo}
+        beforeClose={beforeClose}
+      >
+        <RequesterEditForm requesterId={requesterId} />
+      </RouteDrawer>
+      {confirmation}
+    </>
+  );
+}
+
+function RequesterEditForm({ requesterId }: { requesterId?: string }) {
+  const translate = useTranslate();
+  const close = useRouteSurfaceClose();
   const { refineCore: { onFinish, query }, ...form } = useForm<RequesterRecord, HttpError, RequesterFormValues>({
     refineCoreProps: {
       resource: "desk_requesters",
@@ -129,32 +156,21 @@ export function RequesterEdit({ idParam = "id" }: { idParam?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record]);
 
+  if (query?.isLoading) {
+    return <LoadingState className="min-h-64" />;
+  }
+
   return (
-    <>
-      <RouteDrawer
-        title={translate("requesters.actions.edit", { ns: "starter" }, "Edit requester")}
-        description={translate("requesters.form.editDescription", { ns: "starter" }, "Update this customer's profile details.")}
-        closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
-        closeTo={closeTo}
-        beforeClose={beforeClose}
-      >
-        {query?.isLoading ? (
-          <LoadingState className="min-h-64" />
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
-                <RequesterFields form={form} />
-              </div>
-              <RouteDrawerFooter className="flex-row justify-end">
-                <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
-              </RouteDrawerFooter>
-            </form>
-          </Form>
-        )}
-      </RouteDrawer>
-      {confirmation}
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10">
+          <RequesterFields form={form} />
+        </div>
+        <RouteDrawerFooter className="flex-row justify-end">
+          <Button type="button" variant="outline" onClick={() => close()}>{translate("buttons.cancel", { ns: "starter" }, "Cancel")}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{translate("tickets.actions.save", { ns: "starter" }, "Save changes")}</Button>
+        </RouteDrawerFooter>
+      </form>
+    </Form>
   );
 }
