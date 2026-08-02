@@ -198,6 +198,22 @@ const toHistoryMessage = (
   };
 };
 
+/**
+ * NocoBase resolves `$nDate` variables for every AI system prompt and reads the
+ * caller's zone from `x-timezone`. A missing header arrives as an empty string,
+ * which makes the server's `utcOffset("")` return a number instead of a dayjs
+ * instance, so every prompt-invoking request fails with
+ * `m.startOf is not a function`. The value must be a numeric offset such as
+ * `+08:00`; IANA zone names ("Asia/Shanghai") fail the same way.
+ */
+const aiRequestHeaders = () => {
+  const minutes = -new Date().getTimezoneOffset();
+  const sign = minutes < 0 ? "-" : "+";
+  const abs = Math.abs(minutes);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return { "x-timezone": `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}` };
+};
+
 export class NocoBaseAIService implements AIService {
   constructor(private readonly client: NocoBaseClient = nocobaseClient) {}
 
@@ -392,6 +408,7 @@ export class NocoBaseAIService implements AIService {
             model: options.model.value,
           },
         },
+        headers: aiRequestHeaders(),
       }
     );
     return response.sessionId;
@@ -401,6 +418,7 @@ export class NocoBaseAIService implements AIService {
     return this.client.stream("aiConversations:sendMessages", {
       body,
       signal,
+      headers: aiRequestHeaders(),
     });
   }
 
@@ -408,6 +426,7 @@ export class NocoBaseAIService implements AIService {
     return this.client.stream("aiConversations:resendMessages", {
       body,
       signal,
+      headers: aiRequestHeaders(),
     });
   }
 
@@ -440,6 +459,7 @@ export class NocoBaseAIService implements AIService {
     return this.client.stream("aiConversations:resumeToolCall", {
       body,
       signal,
+      headers: aiRequestHeaders(),
     });
   }
 
@@ -447,6 +467,7 @@ export class NocoBaseAIService implements AIService {
     return this.client.stream("aiConversations:resumeStream", {
       body: { sessionId },
       signal,
+      headers: aiRequestHeaders(),
     });
   }
 }
