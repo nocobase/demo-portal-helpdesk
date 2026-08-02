@@ -1,3 +1,5 @@
+import { asOptionValue } from "../lib";
+import { useMemo } from "react";
 import { useGetLocale, useList, useTranslate } from "@refinedev/core";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -53,7 +55,6 @@ export function TicketFormFields({
   const getLocale = useGetLocale();
   const locale = getLocale();
   const watchedPriority = form.watch("priority");
-  const watchedAssigneeId = form.watch("assigneeId");
   const { result: agentsResult } = useList<AgentRef>({
     resource: "users",
     pagination: { mode: "server", currentPage: 1, pageSize: 200 },
@@ -63,11 +64,51 @@ export function TicketFormFields({
   const { result: queuesResult } = useList<NamedRecord>({ resource: "desk_queues", pagination: { mode: "server", currentPage: 1, pageSize: 50 } });
   const { result: typesResult } = useList<NamedRecord>({ resource: "desk_ticket_types", pagination: { mode: "server", currentPage: 1, pageSize: 50 } });
   const { result: requestersResult } = useList<RequesterRecord>({ resource: "desk_requesters", pagination: { mode: "server", currentPage: 1, pageSize: 100 } });
+  // Base UI resolves a Select's trigger label from `items`. Without it the
+  // trigger prints the raw value, which for these async-loaded relations is a
+  // bare foreign-key id: the options only arrive after the first render, and
+  // passing the looked-up label as static SelectValue children does not
+  // re-render once they do.
+  const queueItems = useMemo(
+    () =>
+      queuesResult.data.map((item) => ({
+        value: String(item.id),
+        label: item.name,
+      })),
+    [queuesResult.data]
+  );
+  const typeItems = useMemo(
+    () =>
+      typesResult.data.map((item) => ({
+        value: String(item.id),
+        label: item.name,
+      })),
+    [typesResult.data]
+  );
+  const requesterItems = useMemo(
+    () =>
+      requestersResult.data.map((item) => ({
+        value: String(item.id),
+        label: item.name,
+      })),
+    [requestersResult.data]
+  );
+  const unassignedLabel = translate(
+    "tickets.assignee.unassigned",
+    { ns: "starter" },
+    "Unassigned"
+  );
+  const agentItems = useMemo(
+    () =>
+      agentsResult.data.map((agent) => ({
+        value: String(agent.id),
+        label: agentDisplayName(agent, unassignedLabel),
+      })),
+    [agentsResult.data, unassignedLabel]
+  );
+
   const slaHours =
     SLA_HOURS[watchedPriority as keyof typeof SLA_HOURS] ?? SLA_HOURS.medium;
-  const selectedAssignee = agentsResult.data.find(
-    (agent) => String(agent.id) === watchedAssigneeId
-  );
   const deadlinePreview = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
@@ -118,11 +159,11 @@ export function TicketFormFields({
       />
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <FormField control={form.control} name="queue_id" rules={{ required: translate("tickets.form.validation.queueRequired", { ns: "starter" }, "Queue is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.queuePlaceholder", { ns: "starter" }, "Select queue")}>{queuesResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{queuesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
-        <FormField control={form.control} name="ticket_type_id" rules={{ required: translate("tickets.form.validation.typeRequired", { ns: "starter" }, "Ticket type is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.typePlaceholder", { ns: "starter" }, "Select ticket type")}>{typesResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{typesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
+        <FormField control={form.control} name="queue_id" rules={{ required: translate("tickets.form.validation.queueRequired", { ns: "starter" }, "Queue is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.queue", { ns: "starter" }, "Queue")}</FormLabel><FormControl render={<Select items={queueItems} value={asOptionValue(field.value)} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.queuePlaceholder", { ns: "starter" }, "Select queue")} /></SelectTrigger><SelectContent>{queuesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
+        <FormField control={form.control} name="ticket_type_id" rules={{ required: translate("tickets.form.validation.typeRequired", { ns: "starter" }, "Ticket type is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.type", { ns: "starter" }, "Ticket type")}</FormLabel><FormControl render={<Select items={typeItems} value={asOptionValue(field.value)} onValueChange={(value) => field.onChange(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.typePlaceholder", { ns: "starter" }, "Select ticket type")} /></SelectTrigger><SelectContent>{typesResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
       </div>
 
-      <FormField control={form.control} name="requester_id" rules={{ required: translate("tickets.form.validation.requesterProfileRequired", { ns: "starter" }, "Requester profile is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.requesterProfile", { ns: "starter" }, "Requester profile")}</FormLabel><FormControl render={<Select value={field.value || ""} onValueChange={(value) => { field.onChange(value ?? ""); const requester = requestersResult.data.find((item) => String(item.id) === value); if (requester) { form.setValue("requester_name", requester.name, { shouldDirty: true }); form.setValue("requester_email", requester.email, { shouldDirty: true }); } }}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.requesterProfilePlaceholder", { ns: "starter" }, "Select requester")}>{requestersResult.data.find((item) => String(item.id) === field.value)?.name ?? null}</SelectValue></SelectTrigger><SelectContent>{requestersResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name} · {item.company}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
+      <FormField control={form.control} name="requester_id" rules={{ required: translate("tickets.form.validation.requesterProfileRequired", { ns: "starter" }, "Requester profile is required") }} render={({ field }) => <FormItem><FormLabel>{translate("tickets.fields.requesterProfile", { ns: "starter" }, "Requester profile")}</FormLabel><FormControl render={<Select items={requesterItems} value={asOptionValue(field.value)} onValueChange={(value) => { field.onChange(value ?? ""); const requester = requestersResult.data.find((item) => String(item.id) === value); if (requester) { form.setValue("requester_name", requester.name, { shouldDirty: true }); form.setValue("requester_email", requester.email, { shouldDirty: true }); } }}><SelectTrigger className="w-full"><SelectValue placeholder={translate("tickets.form.requesterProfilePlaceholder", { ns: "starter" }, "Select requester")} /></SelectTrigger><SelectContent>{requestersResult.data.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name} · {item.company}</SelectItem>)}</SelectContent></Select>} /><FormMessage /></FormItem>} />
 
       <div className="grid gap-6 sm:grid-cols-2">
         <FormField
@@ -256,17 +297,12 @@ export function TicketFormFields({
               <FormControl
                 render={
                   <Select
-                    value={field.value || ""}
+                    items={agentItems}
+                    value={asOptionValue(field.value)}
                     onValueChange={(value) => field.onChange(value ?? "")}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={translate("tickets.assignee.unassigned", { ns: "starter" }, "Unassigned")}>
-                        {selectedAssignee
-                          ? agentDisplayName(selectedAssignee, translate("tickets.assignee.unassigned", { ns: "starter" }, "Unassigned"))
-                          : field.value
-                            ? translate("tickets.assignee.loading", { ns: "starter" }, "Loading assignee...")
-                            : null}
-                      </SelectValue>
+                      <SelectValue placeholder={unassignedLabel} />
                     </SelectTrigger>
                     <SelectContent>
                       {agentsResult.data.map((agent) => (

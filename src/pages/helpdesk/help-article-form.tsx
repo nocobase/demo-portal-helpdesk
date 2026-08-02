@@ -1,6 +1,6 @@
 import { useList, useTranslate, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useParams } from "react-router";
 import { useRouteSurfaceClose } from "@nocobase/portal-sdk/routing";
@@ -17,7 +17,8 @@ import {
   RouteDrawerFooter,
   useRefineUnsavedChangesGuard,
 } from "@/extensions/nocobase-route-surfaces";
-import { TICKET_CATEGORIES, translateTicketCategory, type HelpArticleRecord, type NamedRecord } from "./lib";
+import {
+  asOptionValue, TICKET_CATEGORIES, translateTicketCategory, type HelpArticleRecord, type NamedRecord } from "./lib";
 import { useContextualCloseTo } from "./route-surfaces";
 
 type HelpArticleFormValues = {
@@ -32,8 +33,17 @@ type HelpArticleFormValues = {
 function HelpArticleFields({ form }: { form: UseFormReturn<HelpArticleFormValues> }) {
   const translate = useTranslate();
   const category = form.watch("category");
-  const articleCategoryId = form.watch("article_category_id");
   const { result: categoriesResult } = useList<NamedRecord>({ resource: "desk_article_categories", pagination: { mode: "server", currentPage: 1, pageSize: 100 }, sorters: [{ field: "name", order: "asc" }] });
+  // Base UI resolves the trigger label from `items`; see asOptionValue for why
+  // the selected value has to be normalised to a string first.
+  const categoryItems = useMemo(
+    () =>
+      categoriesResult.data.map((item) => ({
+        value: String(item.id),
+        label: item.name,
+      })),
+    [categoriesResult.data]
+  );
   return (
     <>
       <FormField
@@ -106,11 +116,9 @@ function HelpArticleFields({ form }: { form: UseFormReturn<HelpArticleFormValues
               <FormLabel>{translate("helpLibrary.fields.articleCategory", { ns: "starter" }, "Library category")}</FormLabel>
               <FormControl
                 render={
-                  <Select value={field.value || ""} onValueChange={(value) => field.onChange(value ?? "")}>
+                  <Select items={categoryItems} value={asOptionValue(field.value)} onValueChange={(value) => field.onChange(value ?? "")}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={translate("helpLibrary.form.categoryPlaceholder", { ns: "starter" }, "Select a library category")}>
-                        {categoriesResult.data.find((item) => String(item.id) === articleCategoryId)?.name ?? null}
-                      </SelectValue>
+                      <SelectValue placeholder={translate("helpLibrary.form.categoryPlaceholder", { ns: "starter" }, "Select a library category")} />
                     </SelectTrigger>
                     <SelectContent>
                       {categoriesResult.data.map((item) => (

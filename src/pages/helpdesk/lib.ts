@@ -307,3 +307,16 @@ export const localToday = () => {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 };
+
+/**
+ * Normalise a relation id for use as a Select value.
+ *
+ * Foreign keys reach these forms as either a string or a number: the edit
+ * pages reset the form with `String(...)`, but Refine's useForm then
+ * repopulates it from the fetched record, where the keys are raw numbers.
+ * Select option values are strings and Base UI matches them with `===`, so an
+ * unnormalised number never matches an option and the trigger falls back to
+ * printing the raw id.
+ */
+export const asOptionValue = (value: unknown) =>
+  value === null || value === undefined || value === "" ? "" : String(value);
