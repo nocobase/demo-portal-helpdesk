@@ -438,7 +438,7 @@ export const starter = {
 
   "buildStory.title": "Built by AI agents",
   "buildStory.badge": "100% agent-built",
-  "buildStory.description": "This portal was designed and coded end-to-end by AI agents — no hand-written boilerplate. It's an open demo: download it and keep customizing it with your own coding agent.",
+  "buildStory.description": "A helpdesk for customer tickets — take a question in, assign it, reply and close it, with a clear view of who's on it and how long it's been open. This whole system was designed and built end-to-end by an AI coding agent. You can connect your own coding agent and keep developing it.",
   "buildStory.stat.time": "Build time",
   "buildStory.unit.hour": "h",
   "buildStory.unit.min": " min",
