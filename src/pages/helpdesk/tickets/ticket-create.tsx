@@ -1,4 +1,9 @@
-import { useList, useTranslate, type HttpError } from "@refinedev/core";
+import {
+  useGetLocale,
+  useList,
+  useTranslate,
+  type HttpError,
+} from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useMemo } from "react";
 import { useRouteSurfaceClose } from "@nocobase/portal-sdk/routing";
@@ -13,19 +18,21 @@ import {
   useRefineUnsavedChangesGuard,
 } from "@/extensions/nocobase-route-surfaces";
 import {
-  computeDueAt,
-  computeResolutionDueAt,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_SOURCES,
   type SlaPolicyRecord,
   type TicketRecord,
-  type TicketPriority,
 } from "../lib";
+import {
+  buildTicketPriorityChange,
+  policyForPriority,
+} from "../ticket-mutations";
 import {
   TicketFormFields,
   type TicketFormValues,
 } from "./ticket-form-fields";
+import { useTicketDraft } from "./use-ticket-draft";
 import { useContextualCloseTo } from "../route-surfaces";
 
 export function TicketCreate() {
@@ -37,7 +44,7 @@ export function TicketCreate() {
     <>
       <RouteDrawer
         title={translate("tickets.actions.new", { ns: "starter" }, "New ticket")}
-        description={translate("tickets.form.createDescription", { ns: "starter" }, "Log a customer issue coming in by email or the web portal. The response deadline is set from the priority.")}
+        description={translate("tickets.form.createPolicyDescription", { ns: "starter" }, "Log a customer issue coming in by email or the web portal. SLA deadlines come from the matching policy.")}
         closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
         closeTo={closeTo}
         beforeClose={beforeClose}
@@ -51,6 +58,7 @@ export function TicketCreate() {
 
 function TicketCreateForm() {
   const translate = useTranslate();
+  const locale = useGetLocale()();
   const close = useRouteSurfaceClose();
   const { result: policies } = useList<SlaPolicyRecord>({ resource: "desk_sla_policies", pagination: { mode: "server", currentPage: 1, pageSize: 20 } });
   const {
@@ -62,6 +70,7 @@ function TicketCreateForm() {
       action: "create",
       redirect: false,
       onMutationSuccess: () => {
+        clear();
         close({ skipBeforeClose: true });
       },
     },
@@ -79,6 +88,13 @@ function TicketCreateForm() {
       requester_id: "",
     },
   });
+  const { draft, restore, discard, clear } = useTicketDraft(form);
+  const draftTime = draft
+    ? new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(draft.savedAt))
+    : "";
   const aiFormRef = useAIForm({
     id: "ticket-intake-form",
     title: translate("tickets.form.aiContextTitle", { ns: "starter" }, "New ticket intake"),
@@ -182,12 +198,50 @@ function TicketCreateForm() {
       <form
         onSubmit={form.handleSubmit((values) =>
           onFinish(
-            toCreatePayload(values, policies.data.find((policy) => policy.priority === values.priority)) as unknown as TicketFormValues
+            toCreatePayload(
+              values,
+              policyForPriority(
+                policies.data,
+                values.priority as Parameters<typeof policyForPriority>[1]
+              )
+            ) as unknown as TicketFormValues
           )
         )}
         className="flex min-h-0 flex-1 flex-col"
       >
         <div ref={aiFormRef} className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
+          {draft ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+              <p className="text-xs">
+                {translate(
+                  "tickets.draft.restorePrompt",
+                  { ns: "starter", time: draftTime },
+                  "Restore the draft you started {{time}}?"
+                )}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" onClick={restore}>
+                  {translate(
+                    "tickets.draft.restore",
+                    { ns: "starter" },
+                    "Restore"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={discard}
+                >
+                  {translate(
+                    "tickets.draft.discard",
+                    { ns: "starter" },
+                    "Discard"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <AiFillPanel
             ai={ai}
             title={translate("tickets.form.aiFillTitle", { ns: "starter" }, "AI assist")}
@@ -212,7 +266,7 @@ function TicketCreateForm() {
             <p className="text-xs leading-5 text-muted-foreground">{translate("tickets.form.aiHint", { ns: "starter" }, "Already typed the subject and description? Have the AI employee re-check just the category and priority.")}</p>
             <AIEmployeeShortcut aiEmployee="dex" tasks={[classifyTask]} label={translate("tickets.form.aiAction", { ns: "starter" }, "Triage with AI")} size={28} className="shrink-0" />
           </div>
-          <TicketFormFields form={form} />
+          <TicketFormFields form={form} policies={policies.data} />
         </div>
         <RouteDrawerFooter className="flex-row justify-end">
           <Button type="button" variant="outline" onClick={() => close()}>
@@ -237,7 +291,6 @@ export function toCreatePayload(values: TicketFormValues, policy?: SlaPolicyReco
     subject: values.subject,
     description: values.description,
     status: "open",
-    priority: values.priority,
     category: values.category || null,
     source: values.source,
     requester_name: values.requester_name,
@@ -246,14 +299,9 @@ export function toCreatePayload(values: TicketFormValues, policy?: SlaPolicyReco
     queue_id: values.queue_id ? Number(values.queue_id) : null,
     ticket_type_id: values.ticket_type_id ? Number(values.ticket_type_id) : null,
     requester_id: values.requester_id ? Number(values.requester_id) : null,
-    sla_policy_id: policy?.id ?? null,
-    response_due_at: policy ? computeDueAt(policy.response_mins) : null,
-    resolution_due_at: computeResolutionDueAt(
-      values.priority as TicketPriority
+    ...buildTicketPriorityChange(
+      values.priority as Parameters<typeof buildTicketPriorityChange>[0],
+      policy
     ),
-    ...(policy ? { resolution_due_at: computeDueAt(policy.resolve_mins) } : {}),
-    sla_breached: false,
-    response_breached: false,
-    resolution_breached: false,
   };
 }

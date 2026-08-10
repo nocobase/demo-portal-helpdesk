@@ -26,6 +26,7 @@ import { LogOutIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/app-shell/brand";
 import { LanguageToggle } from "@/components/app-shell/language-toggle";
+import { GlobalSearch } from "@/components/helpdesk/global-search";
 import { extensionUserMenuItems } from "@/app/extensions";
 
 const pluginSettingsResource = {
@@ -74,6 +75,7 @@ function DesktopHeader() {
         </span>
       </div>
       <div className="flex items-center gap-2">
+        <GlobalSearch />
         <SettingsLink />
         <LanguageToggle />
         <ThemeToggle />
@@ -113,6 +115,7 @@ function MobileHeader() {
       />
       <Brand logoClassName="h-6" />
       <div className="flex shrink-0 items-center gap-1">
+        <GlobalSearch />
         <SettingsLink className="size-9" />
         <LanguageToggle className="size-9" />
         <ThemeToggle className="size-9" />

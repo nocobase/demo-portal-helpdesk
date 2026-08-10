@@ -253,7 +253,7 @@ export const computeDueAt = (minutes: number, from: Date = new Date()) =>
   new Date(from.getTime() + minutes * 60 * 1000).toISOString();
 
 export const minutesBetween = (start: string, end: string) =>
-  Math.max(0, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000));
+  Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
 
 export const formatRelativeDeadline = (
   dueAt: Date,

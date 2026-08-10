@@ -13,12 +13,13 @@ import {
   useRefineUnsavedChangesGuard,
 } from "@/extensions/nocobase-route-surfaces";
 import {
-  computeResolutionDueAt,
-  computeDueAt,
   type SlaPolicyRecord,
-  type TicketPriority,
   type TicketRecord,
 } from "../lib";
+import {
+  buildTicketPriorityChange,
+  policyForPriority,
+} from "../ticket-mutations";
 import {
   TicketFormFields,
   type TicketFormValues,
@@ -35,7 +36,7 @@ export function TicketEdit() {
     <>
       <RouteDrawer
         title={translate("tickets.actions.edit", { ns: "starter" }, "Edit ticket")}
-        description={translate("tickets.form.editDescription", { ns: "starter" }, "Change ticket details. Changing the priority resets the response deadline.")}
+        description={translate("tickets.form.editPolicyDescription", { ns: "starter" }, "Change ticket details. Changing the priority reapplies the matching SLA policy and both deadlines.")}
         closeLabel={translate("buttons.close", { ns: "starter" }, "Close")}
         closeTo={closeTo}
         beforeClose={beforeClose}
@@ -110,13 +111,24 @@ function TicketEditForm({ ticketId }: { ticketId?: string }) {
       <form
         onSubmit={form.handleSubmit((values) =>
           onFinish(
-            toUpdatePayload(values, originalPriority, policies.data.find((policy) => policy.priority === values.priority)) as unknown as TicketFormValues
+            toUpdatePayload(
+              values,
+              originalPriority,
+              policyForPriority(
+                policies.data,
+                values.priority as Parameters<typeof policyForPriority>[1]
+              )
+            ) as unknown as TicketFormValues
           )
         )}
         className="flex min-h-0 flex-1 flex-col"
       >
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 [&_[data-slot=input]]:h-10 [&_[data-slot=select-trigger]]:h-10">
-          <TicketFormFields form={form} />
+          <TicketFormFields
+            form={form}
+            excludeTicketId={ticketId}
+            policies={policies.data}
+          />
         </div>
         <RouteDrawerFooter className="flex-row justify-end">
           <Button type="button" variant="outline" onClick={() => close()}>
@@ -151,17 +163,13 @@ function toUpdatePayload(values: TicketFormValues, originalPriority: string, pol
     requester_id: values.requester_id ? Number(values.requester_id) : null,
   };
   if (values.priority !== originalPriority) {
-    payload.resolution_due_at = computeResolutionDueAt(
-      values.priority as TicketPriority
+    Object.assign(
+      payload,
+      buildTicketPriorityChange(
+        values.priority as Parameters<typeof buildTicketPriorityChange>[0],
+        policy
+      )
     );
-    if (policy) {
-      payload.sla_policy_id = policy.id;
-      payload.response_due_at = computeDueAt(policy.response_mins);
-      payload.resolution_due_at = computeDueAt(policy.resolve_mins);
-      payload.sla_breached = false;
-      payload.response_breached = false;
-      payload.resolution_breached = false;
-    }
   }
   return payload;
 }

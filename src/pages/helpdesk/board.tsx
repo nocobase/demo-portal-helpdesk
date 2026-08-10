@@ -1,4 +1,9 @@
-import { useList, useTranslate, useUpdate } from "@refinedev/core";
+import {
+  useList,
+  useNotification,
+  useTranslate,
+  useUpdate,
+} from "@refinedev/core";
 import { Plus } from "lucide-react";
 import { useState, type DragEvent } from "react";
 import { Outlet } from "react-router";
@@ -19,6 +24,7 @@ import {
 } from "./lib";
 import { AgentAvatar } from "./tickets/ticket-list";
 import { useOpenContextualChild } from "./route-surfaces";
+import { buildTicketStatusTransition } from "./ticket-mutations";
 
 const COLUMN_STYLES: Record<TicketStatus, string> = {
   open: "border-t-blue-400",
@@ -31,6 +37,7 @@ export function BoardPage() {
   const translate = useTranslate();
   const openChild = useOpenContextualChild();
   const update = useUpdate();
+  const { open: notify } = useNotification();
   const [dragOver, setDragOver] = useState<TicketStatus | null>(null);
   const { result, query } = useList<TicketRecord>({
     resource: "desk_tickets",
@@ -42,10 +49,18 @@ export function BoardPage() {
 
   const moveTicket = (ticket: TicketRecord, to: TicketStatus) => {
     if (ticket.status === to) return;
-    const values: Record<string, unknown> = { status: to };
-    if (to === "resolved") values.resolved_at = new Date().toISOString();
-    if ((to === "in_progress" || to === "open") && ticket.resolved_at) {
-      values.resolved_at = null;
+    let values: ReturnType<typeof buildTicketStatusTransition>;
+    try {
+      values = buildTicketStatusTransition(ticket, to);
+    } catch (error) {
+      notify?.({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "This ticket status transition is not allowed.",
+      });
+      return;
     }
     update.mutate(
       { resource: "desk_tickets", id: ticket.id, values },
